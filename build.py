@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
 """Dựng 3 trang riêng từ msc-lab.html (bản gộp)."""
-import io, re, sys
+import io, os, re, sys
 
 MASTER = "src/msc-lab.html"
 src = io.open(MASTER, encoding="utf-8").read()
+
+# Hai chế độ dựng:
+#   python build.py              -> bản web, link tương đối, ghi ra thư mục gốc
+#   python build.py --artifact   -> bản artifact claude.ai, link tuyệt đối, ghi ra dist-artifact/
+ARTIFACT = "--artifact" in sys.argv
+ART_URL = {
+  "lab" : "https://claude.ai/code/artifact/a923bc34-1071-4147-aaf2-48490f11def9",
+  "fab" : "https://claude.ai/code/artifact/619b4163-9ee6-437c-bd29-c3e93587a320",
+  "atom": "https://claude.ai/code/artifact/6713282a-fdd9-44f6-894a-00def5b97a3d",
+}
+OUT_DIR = "dist-artifact" if ARTIFACT else "."
+if ARTIFACT and not os.path.isdir(OUT_DIR):
+    os.makedirs(OUT_DIR)
 
 PAGES = {
  "lab": dict(
@@ -73,8 +86,10 @@ def nav_html(page):
             rows.append('    <span class="tab" aria-selected="true" style="cursor:default">'
                         '<span class="tab-glyph">%s</span> %s</span>' % (ico, name))
         else:
-            rows.append('    <a class="tab" href="%s" style="text-decoration:none">'
-                        '<span class="tab-glyph">%s</span> %s</a>' % (HREF[p], ico, name))
+            href = ART_URL[p] if ARTIFACT else HREF[p]
+            tgt = ' target="_top"' if ARTIFACT else ""
+            rows.append('    <a class="tab"%s href="%s" style="text-decoration:none">'
+                        '<span class="tab-glyph">%s</span> %s</a>' % (tgt, href, ico, name))
     extra = ""
     if page == "lab":
         extra = ('\n    <span style="flex:1"></span>'
@@ -103,8 +118,9 @@ for page, cfg in PAGES.items():
         pat = re.compile(r'(<section class="panel wrap" id="panel-%s"[^>]*?)(\s+hidden)?>' % pid)
         rep = (lambda m: m.group(1) + ('>' if keep and pid == page else ' hidden>'))
         out = pat.sub(rep, out, 1)
-    io.open(cfg["file"], "w", encoding="utf-8").write(out)
+    io.open(os.path.join(OUT_DIR, cfg["file"]), "w", encoding="utf-8").write(out)
     built.append((cfg["file"], round(len(out)/1024), cfg["title"]))
 
+print(("Bản artifact -> " if ARTIFACT else "Bản web -> ") + OUT_DIR)
 for f,kb,t in built:
     print("%-22s %5d KB  %s" % (f,kb,t))

@@ -11,8 +11,14 @@ Nguồn duy nhất là `src/msc-lab.html`. Quy trình bắt buộc:
 ```bash
 # 1. sửa src/msc-lab.html
 # 2. dựng lại 3 trang
-python build.py
+python build.py              # bản web (link tương đối) -> thư mục gốc
+python build.py --artifact   # bản claude.ai (link tuyệt đối) -> dist-artifact/
 ```
+
+Hai chế độ chỉ khác nhau ở **link chéo giữa ba trang**. Bản web dùng đường dẫn tương đối
+(`vat-lieu.html`) nên chạy được ở bất kỳ đâu, kể cả mở file trực tiếp. Bản artifact dùng URL
+tuyệt đối vì mỗi artifact nằm ở một tên miền riêng, không có file anh em bên cạnh.
+Thư mục `dist-artifact/` không đưa vào git.
 
 Nếu sửa thẳng vào 3 file ở thư mục gốc, lần chạy `build.py` kế tiếp sẽ ghi đè mất hết.
 

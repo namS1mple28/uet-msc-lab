@@ -59,7 +59,8 @@ dự đoán.
 ```bash
 git clone <repo>
 cd uet-msc-lab
-python build.py     # dựng lại 3 trang từ src/msc-lab.html
+python build.py              # bản web: link tương đối, ghi ra thư mục gốc
+python build.py --artifact   # bản artifact claude.ai, ghi ra dist-artifact/
 ```
 
 Chỉ sửa `src/msc-lab.html`. Ba file HTML ở thư mục gốc là sinh ra tự động, sửa vào đó sẽ bị ghi đè.
