@@ -1,0 +1,45 @@
+name: Kiểm tra file dựng khớp file nguồn
+
+# Ba file index.html / vat-lieu.html / nguyen-tu.html là sinh ra tự động từ
+# src/msc-lab.html. Job này dựng lại rồi so sánh: nếu ai đó sửa thẳng vào file
+# đã dựng mà quên chạy build.py, hoặc sửa nguồn mà quên dựng lại, CI sẽ báo đỏ.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dựng lại từ file nguồn
+        run: python build.py
+
+      - name: So sánh với file đã commit
+        run: |
+          if ! git diff --quiet -- index.html vat-lieu.html nguyen-tu.html; then
+            echo "::error::File đã dựng không khớp src/msc-lab.html."
+            echo "Chạy 'python build.py' rồi commit lại ba file HTML."
+            echo "--- khác biệt ---"
+            git diff --stat -- index.html vat-lieu.html nguyen-tu.html
+            exit 1
+          fi
+          echo "Ba trang khớp với file nguồn."
+
+      - name: Kiểm tra nhanh từng trang
+        run: |
+          set -e
+          for f in index.html vat-lieu.html nguyen-tu.html; do
+            test -s "$f" || { echo "::error::Thiếu $f"; exit 1; }
+            grep -q "__MSC_PAGE" "$f" || { echo "::error::$f không có cờ trang"; exit 1; }
+            if grep -q "__URL_" "$f"; then echo "::error::$f còn placeholder chưa thay"; exit 1; fi
+            echo "$f — $(wc -c < "$f") byte"
+          done
