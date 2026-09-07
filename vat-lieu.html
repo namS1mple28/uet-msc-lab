@@ -439,6 +439,7 @@ body.dragging *{cursor:grabbing !important}
   cursor:grab;transition:.15s;text-align:center;
 }
 .tool:hover{border-color:var(--accent-soft);transform:translateY(-2px)}
+.tool[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 0 1px var(--accent)}
 .tool:active{cursor:grabbing}
 .tool svg{display:block}
 .tool span{font-size:10px;color:var(--muted);line-height:1.25}
@@ -453,8 +454,9 @@ body.dragging *{cursor:grabbing !important}
   padding:6px 12px;border-radius:var(--r-pill);background:transparent;
   border:1px solid var(--hairline-2);color:var(--muted);font-size:12px;cursor:pointer;transition:.15s;
 }
-.mini:hover{color:var(--text);border-color:var(--accent)}
+.mini:hover:not(:disabled){color:var(--text);border-color:var(--accent)}
 .mini[aria-pressed="true"]{background:var(--accent-dim);border-color:var(--accent);color:var(--text)}
+.mini:disabled{opacity:.42;cursor:not-allowed}
 .mini.danger:hover{border-color:var(--acid);color:var(--acid)}
 #benchCv{display:block;width:100%;height:auto;cursor:default;touch-action:none;
   background:linear-gradient(180deg,var(--bench-a) 0%,var(--bench-b) 62%,var(--bench-c) 100%)}
@@ -681,6 +683,7 @@ body.dragging *{cursor:grabbing !important}
         <button class="mini" id="mStir">Khuấy</button>
         <button class="mini" id="mTare">Trừ bì cân</button>
         <button class="mini" id="mEmpty">Đổ bỏ</button>
+        <button class="mini" id="mClearChem" disabled>Bỏ chọn hóa chất</button>
         <button class="mini danger" id="mDel">Cất đi</button>
         <span class="sp"></span>
         <button class="mini" id="mPreset">Bộ chuẩn độ</button>
@@ -2122,6 +2125,20 @@ const CAB_GROUPS=[
 const BENCH=[];
 let nextId=1, selId=null, heldReagent=null, rxnRows=[];
 
+/* Đồng bộ hóa chất đang cầm với nút hủy và trạng thái trong tủ. */
+function setHeldReagent(r){
+  heldReagent=r||null;
+  const b=$("#mClearChem");
+  if(b){
+    b.disabled=!heldReagent;
+    b.setAttribute("aria-pressed",String(!!heldReagent));
+    b.textContent=heldReagent?`Bỏ chọn ${heldReagent.f}`:"Bỏ chọn hóa chất";
+    b.title=heldReagent?`Ngừng dùng ${heldReagent.n}`:"Không có hóa chất nào đang được chọn";
+  }
+  document.querySelectorAll("#cabBody [data-chem]").forEach(x=>
+    x.setAttribute("aria-pressed",String(!!heldReagent&&x.dataset.chem===heldReagent.id)));
+}
+
 function newVessel(type,x,y){
   const g=GEAR[type];
   return{id:nextId++,type,x,y,kind:g.kind,cap:g.cap||0,
@@ -3231,6 +3248,7 @@ function renderCabinet(tab){
       g.items.map(id=>`<button class="tool" data-gear="${id}" title="${GEAR[id].name}">
         ${toolIcon(id)}<span>${GEAR[id].name}</span></button>`).join("")+`</div>`).join("");
   }
+  setHeldReagent(heldReagent);
 }
 $("#cabT-tool").addEventListener("click",()=>{
   $("#cabT-tool").setAttribute("aria-selected","true");$("#cabT-chem").setAttribute("aria-selected","false");
@@ -3415,7 +3433,7 @@ addEventListener("pointerup",e=>{
     if(!d.moved){                                   // bấm gọn: thêm vào giữa bàn
       if(d.gear)spawnGear(d.gear,BW/2+(Math.random()-.5)*180,FLOOR);
       else if(d.solid)toast(`Kéo <b>${SOLIDS[d.solid].f}</b> thả vào bình để cho vào`,"","▪");
-      else{heldReagent=REAGENTS.find(r=>r.id===d.chem);
+      else{setHeldReagent(REAGENTS.find(r=>r.id===d.chem));
         toast(`Đang cầm <b>${heldReagent.f}</b> — bấm vào bình để rót`,"","◇");}
     }else if(inside){
       if(d.gear)spawnGear(d.gear,p.x,Math.min(FLOOR,p.y));
@@ -3560,6 +3578,12 @@ $("#mEmpty").addEventListener("click",()=>{
   Object.assign(s,{vol:0,ions:{},weakA:0,weakB:0,precip:[],cplx:[],gas:0,indicator:null,
     parts:[],bubs:[],pops:[],temp:25,boil:0,co2:0,h2:0,solids:{}});
   note2(`Đổ bỏ và tráng sạch ${GEAR[s.type].name}.`);refreshLab();
+});
+$("#mClearChem").addEventListener("click",()=>{
+  if(!heldReagent)return;
+  const r=heldReagent;
+  setHeldReagent(null);
+  toast(`Đã bỏ chọn <b>${r.f}</b> — chạm vào dụng cụ sẽ không rót thêm hóa chất`,"ok","✓");
 });
 $("#mDel").addEventListener("click",()=>{
   const s=sel();if(!s)return toast("Chọn một dụng cụ trước","bad","!");
