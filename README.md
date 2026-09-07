@@ -3,11 +3,13 @@
 Bộ ba phòng thí nghiệm mô phỏng chạy thẳng trên trình duyệt, làm cho
 [CLB Khoa học Vật liệu — Trường Đại học Công nghệ, ĐHQGHN](https://uetmsc.framer.website/).
 
+### 👉 Dùng ngay: **https://nams1mple28.github.io/uet-msc-lab/**
+
 | Trang | Nội dung |
 |---|---|
-| [`index.html`](index.html) | **Phòng lab hóa học** — kéo dụng cụ ra bàn, pha chế, đun, lọc, dẫn khí |
-| [`vat-lieu.html`](vat-lieu.html) | **Xưởng vật liệu** — chế tạo mẫu qua 8 trạm rồi đo XRD, SEM, UV–Vis |
-| [`nguyen-tu.html`](nguyen-tu.html) | **Bảng tuần hoàn** — 118 nguyên tố, cấu hình electron, orbital 3D |
+| [Phòng lab hóa học](https://nams1mple28.github.io/uet-msc-lab/) | Kéo dụng cụ ra bàn, pha chế, đun, lọc, dẫn khí |
+| [Xưởng vật liệu](https://nams1mple28.github.io/uet-msc-lab/vat-lieu.html) | Chế tạo mẫu qua 8 trạm rồi đo XRD, SEM, UV–Vis |
+| [Bảng tuần hoàn](https://nams1mple28.github.io/uet-msc-lab/nguyen-tu.html) | 118 nguyên tố, cấu hình electron, orbital 3D |
 
 Không cần cài gì. Mở file HTML là chạy. Có chế độ nền sáng và nền tối.
 
