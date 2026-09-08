@@ -6,12 +6,15 @@
 
 **Ba file `index.html`, `vat-lieu.html`, `nguyen-tu.html` là file SINH RA TỰ ĐỘNG. Không sửa trực tiếp.**
 
-Nguồn duy nhất là `src/msc-lab.html`. Quy trình bắt buộc:
+Nguồn của ba phòng lab là `src/msc-lab.html`. **`analysis.html` cũng là file sinh tự động**, từ các module `src/analysis/`, template và CSS riêng. Không chỉnh trực tiếp bất kỳ HTML ở thư mục gốc.
+
+Data Studio dùng JavaScript modules, Web Worker và thư viện bundle nội tuyến. Node.js 22+ và `npm ci` chỉ cần lúc phát triển/build; người dùng vẫn mở HTML để chạy hoàn toàn trong browser. Quy trình bắt buộc:
 
 ```bash
-# 1. sửa src/msc-lab.html
-# 2. dựng lại 3 trang
-python build.py              # bản web (link tương đối) -> thư mục gốc
+# 1. cài dependency đúng lockfile; sửa nguồn tương ứng
+npm ci
+# 2. dựng lại 4 trang
+python build.py              # bản web (link tương đối), gọi esbuild cho Data Studio
 python build.py --artifact   # bản claude.ai (link tuyệt đối) -> dist-artifact/
 ```
 
@@ -19,6 +22,19 @@ Hai chế độ chỉ khác nhau ở **link chéo giữa ba trang**. Bản web d
 (`vat-lieu.html`) nên chạy được ở bất kỳ đâu, kể cả mở file trực tiếp. Bản artifact dùng URL
 tuyệt đối vì mỗi artifact nằm ở một tên miền riêng, không có file anh em bên cạnh.
 Thư mục `dist-artifact/` không đưa vào git.
+
+Data Studio chưa có artifact URL: chế độ `--artifact` vẫn chỉ dựng ba phòng lab, không chèn link giả tới studio. Nút chuyển phổ sẽ xuất file project ở chế độ artifact/file trực tiếp.
+
+## Data Studio
+
+- `src/analysis/CONTRACT.md` mô tả contract Dataset/Operation/FitResult/FigureSpec/Project v1 và ownership các module.
+- Không sửa dữ liệu gốc. Mọi phép xử lý/chỉnh sửa tạo dataset dẫn xuất, lưu nguồn, revision và tham số; mask=true là loại điểm khỏi phân tích.
+- Worker dùng dữ liệu đầy đủ; preview có thể giảm điểm để vẽ, kết quả fit/export không được âm thầm downsample.
+- Không báo fit thất bại, không hội tụ hoặc covariance suy biến như thành công. Phân biệt weighted SSE và uncertainty.
+- Scherrer cần đơn vị radian, mô hình hiệu chỉnh đúng peak profile; Tauc cần người dùng xác nhận signal/transition/vùng fit và giả thiết quang học.
+- Dữ liệu mô phỏng gắn nhãn rõ ràng; bridge XRD chuyển mảng đang hiển thị, không gọi lại hàm tạo noise.
+- Thư viện/font được pin và bundle cục bộ, không dùng CDN lúc chạy. Giữ license dependency/font.
+- `npm test`: numerical/data tests; `npm run test:browser`: Chromium/Firefox, offline/file, export và regression. CI phải rebuild rồi so sánh cả bốn HTML.
 
 Nếu sửa thẳng vào 3 file ở thư mục gốc, lần chạy `build.py` kế tiếp sẽ ghi đè mất hết.
 
@@ -88,8 +104,16 @@ là chưa có**, tuyệt đối không điền số dự đoán như thể là s
 
 ## Kiểm thử
 
-Chưa có test tự động. Cách đang dùng: mở file trong trình duyệt rồi chạy JS trong console để
-kiểm tra kết quả tính toán, ví dụ:
+Chạy toàn bộ numerical/data test và browser regression trước khi commit:
+
+```bash
+npm test
+npm run test:browser
+python3 build.py
+git diff --check
+```
+
+Có thể kiểm tra bổ sung các hàm mô phỏng trong browser console, ví dụ:
 
 ```js
 phasePeaks('Si')            // vạch XRD của silic
@@ -98,8 +122,8 @@ RECIPES.hydro.calc({c:0.1,pH:11,fill:70,T:180,t:12})   // kết quả thủy nhi
 tubePh(BENCH.find(o=>o.kind==='vessel'))               // pH của bình đầu tiên
 ```
 
-Nếu thêm được test tự động (Playwright chẳng hạn) thì rất tốt — ưu tiên kiểm tra các con số
-trong bảng ở trên.
+Playwright bắt buộc chạy trên Chromium và Firefox, gồm chế độ `file://`, Web Worker, figure export
+và chuỗi hồi quy chọn hóa chất → rót → bỏ chọn → chạm bình khác.
 
 ## Quy ước code
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Dựng 3 trang riêng từ msc-lab.html (bản gộp)."""
-import io, os, re, sys
+import io, os, re, sys, subprocess
 
 MASTER = "src/msc-lab.html"
 src = io.open(MASTER, encoding="utf-8").read()
@@ -90,6 +90,9 @@ def nav_html(page):
             tgt = ' target="_top"' if ARTIFACT else ""
             rows.append('    <a class="tab"%s href="%s" style="text-decoration:none">'
                         '<span class="tab-glyph">%s</span> %s</a>' % (tgt, href, ico, name))
+    if not ARTIFACT:
+        rows.append('    <a class="tab" href="analysis.html" style="text-decoration:none">'
+                    '<span class="tab-glyph">▥</span> Phân tích dữ liệu</a>')
     extra = ""
     if page == "lab":
         extra = ('\n    <span style="flex:1"></span>'
@@ -111,7 +114,7 @@ for page, cfg in PAGES.items():
     out = nav_re.sub(lambda m: nav_html(page), out, 1)
     # đặt PAGE trước script chính
     out = out.replace('<script>\n"use strict";',
-                      '<script>window.__MSC_PAGE=%r;</script>\n<script>\n"use strict";' % page, 1)
+                      '<script>window.__MSC_PAGE=%r;window.__MSC_ARTIFACT=%s;</script>\n<script>\n"use strict";' % (page, 'true' if ARTIFACT else 'false'), 1)
     # ẩn sẵn các panel không thuộc trang này
     for pid in ["fab","lab","mix","atom"]:
         keep = (pid == page) or (page == "lab" and pid == "mix")
@@ -124,3 +127,6 @@ for page, cfg in PAGES.items():
 print(("Bản artifact -> " if ARTIFACT else "Bản web -> ") + OUT_DIR)
 for f,kb,t in built:
     print("%-22s %5d KB  %s" % (f,kb,t))
+if not ARTIFACT:
+    npm = "npm.cmd" if os.name == "nt" else "npm"
+    subprocess.run([npm, "run", "build:analysis"], check=True)
