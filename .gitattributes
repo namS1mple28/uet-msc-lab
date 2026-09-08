@@ -1,0 +1,2 @@
+# Bundle minified chứa template literal của dependency với khoảng trắng có nghĩa.
+analysis.html -whitespace

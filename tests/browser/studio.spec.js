@@ -40,7 +40,7 @@ test('CSV mapping, worksheet edit, mask, undo and redo preserve raw data', async
   await page.locator('#msds-map-error').selectOption('2');
   await page.locator('#msds-import-confirm').click();
   await expect(page.locator('.msds-dataset')).toHaveCount(1);
-  await page.getByRole('button', { name: 'Bảng' }).click();
+  await page.getByRole('tab', { name: 'Bảng' }).click();
   await expect(page.locator('#msds-table-summary')).toContainText('Cảnh báo');
   const rawValue = await page.locator('.msds-cell[data-row="0"][data-column="y"]').inputValue();
   expect(rawValue).toBe('2');
@@ -140,7 +140,7 @@ test('Tauc workflow requires confirmation and recovers the synthetic band gap', 
 test('full 2x2 figure exports vector SVG, 300 dpi PNG and PDF', async ({ page }, testInfo) => {
   const errors = collectPageErrors(page);
   await addSample(page, '1');
-  await page.getByRole('button', { name: 'Figure', exact: true }).click();
+  await page.getByRole('tab', { name: 'Figure', exact: true }).click();
   await page.locator('#msds-layout').selectOption('2x2');
   for (const panel of ['1', '2', '3']) {
     await page.locator('#msds-figure-panel').selectOption(panel);

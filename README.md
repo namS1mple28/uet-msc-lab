@@ -25,9 +25,13 @@ Trang `analysis.html` chạy hoàn toàn trong browser và không gửi dữ li�
 - Peak detection và multi-peak fitting bằng Gaussian, Lorentzian hoặc pseudo-Voigt, có bounds/fixed parameters, weighted fitting, residuals, RMSE, R² và trạng thái convergence.
 - XRD: Bragg d-spacing và Scherrer với instrumental broadening được xác nhận; Raman/FTIR: absorbance, peak ratio; UV–Vis: Tauc direct/indirect, thickness và Kubelka–Munk.
 - Figure 1×1/1×2/2×1/2×2, overlay/offset/reference sticks, error bars, dual Y, linear/log/reversed axes và annotations; xuất full-data SVG/PDF vector hoặc PNG 300/600 dpi theo kích thước mm.
+- Figure Editor v2 theo mô hình Page → Layer → Plot: publication themes, page/plot background, margins, major/minor grid, axis/tick controls, legend placement, trace order/visibility, opacity/fill/line shape và error-bar styling.
+- Công cụ Phase 2: median/MAD despike, descriptive statistics theo ROI, fit diagnostics (RSS, DoF, adjusted R², AIC/BIC, weighted reduced χ²), Williamson–Hall UDM, cubic lattice parameter và Urbach energy có validity guard.
 - Raw data bất biến; undo/redo, IndexedDB autosave và project JSON versioned giữ dataset lineage, operations, fit results và figures để tái lập.
 
 Dữ liệu mẫu đều mang nhãn **synthetic**. Kết quả Scherrer là crystallite size, không mặc định là particle size; Tauc không tự suy ra transition type chỉ từ R².
+
+Xem [Origin parity roadmap](docs/ORIGIN_PARITY.md) để biết feature matrix, acceptance criteria và ranh giới những chức năng cần backend, reference database hoặc định dạng proprietary.
 
 ## Phòng lab hóa học
 

@@ -54,10 +54,13 @@ function assertFiniteRows(dataset, indices = null, { error = false } = {}) {
 
 function assertMonotonic(dataset) {
   assertFiniteRows(dataset);
+  const active = [];
+  for (let i = 0; i < dataset.x.length; i++) if (!isMasked(dataset, i)) active.push(i);
   let direction = 0;
-  for (let i = 1; i < dataset.x.length; i++) {
-    if (!finite(dataset.x[i - 1]) || !finite(dataset.x[i])) fail(`Non-finite x value at row ${i + 1}.`);
-    const d = dataset.x[i] - dataset.x[i - 1];
+  for (let pos = 1; pos < active.length; pos++) {
+    const i = active[pos]; const previous = active[pos - 1];
+    if (!finite(dataset.x[previous]) || !finite(dataset.x[i])) fail(`Non-finite x value at row ${i + 1}.`);
+    const d = dataset.x[i] - dataset.x[previous];
     if (d === 0) fail(`Duplicate x value at rows ${i} and ${i + 1}.`);
     const sign = Math.sign(d);
     if (!direction) direction = sign;
@@ -213,12 +216,43 @@ function fitQuality(observed, fitted) {
   return { residuals, rmse: Math.sqrt(sse / observed.length), r2: sst === 0 ? (sse === 0 ? 1 : null) : 1 - sse / sst, sse };
 }
 
+// Tách diagnostics khỏi tham số fit. RSS là tổng bình phương phần dư không
+// trọng số; reduced chi-square chỉ có ý nghĩa khi có sigmaY theo từng điểm.
+function fitDiagnostics(observed, fitted, parameterCount, sigma = null, quality = null) {
+  if (!Array.isArray(observed) || !Array.isArray(fitted) || observed.length !== fitted.length || !observed.length) {
+    return { rss: null, degreesOfFreedom: null, adjustedR2: null, aic: null, bic: null };
+  }
+  const q = quality ?? fitQuality(observed, fitted);
+  const n = observed.length;
+  const p = Number.isInteger(parameterCount) ? parameterCount : 0;
+  const degreesOfFreedom = n - p;
+  const adjustedR2 = degreesOfFreedom > 0 && q.r2 != null && n > 1
+    ? 1 - (1 - q.r2) * (n - 1) / degreesOfFreedom : null;
+  const rss = q.sse;
+  // Information criterion với RSS bằng 0 tiến tới -Infinity. JSON không nên
+  // truyền giá trị đó, nên trả null nhưng vẫn giữ RSS chính xác.
+  const aic = rss > 0 ? n * Math.log(rss / n) + 2 * p : null;
+  const bic = rss > 0 ? n * Math.log(rss / n) + p * Math.log(n) : null;
+  const diagnostics = { rss, degreesOfFreedom, adjustedR2, aic, bic };
+  if (sigma) {
+    if (sigma.length !== n || degreesOfFreedom <= 0) diagnostics.reducedChiSquare = null;
+    else {
+      let chiSquare = 0;
+      for (let i = 0; i < n; i++) chiSquare += ((observed[i] - fitted[i]) / sigma[i]) ** 2;
+      diagnostics.reducedChiSquare = chiSquare / degreesOfFreedom;
+    }
+  }
+  return diagnostics;
+}
+
 function invalidFit(model, dataset, params, message, selected = null) {
   const indices = selected ?? [];
+  const diagnostics = fitDiagnostics(null, null, null);
   return resultEnvelope({
     type: 'fit', model, status: 'invalid', message, parameters: {}, peaks: [],
     x: indices.map((i) => dataset.x[i]), yFit: [], residuals: [], rmse: null, r2: null,
     uncertainty: null, iterations: 0, roi: params.roi ?? null,
+    diagnostics, ...diagnostics,
   }, dataset);
 }
 
@@ -233,7 +267,7 @@ function linearOrPolynomialFit(dataset, params) {
   }
   const x = indices.map((i) => dataset.x[i]);
   const y = indices.map((i) => dataset.y[i]);
-  const sigma = params.weighted ? indices.map((i) => dataset.error[i]) : null;
+  const sigma = params.weighted === true ? indices.map((i) => dataset.error[i]) : null;
   const regression = polynomialRegression(x, y, sigma, degree);
   if (!regression.valid) return invalidFit(params.model, dataset, params, regression.message, indices);
   const quality = fitQuality(y, regression.fitted);
@@ -243,10 +277,11 @@ function linearOrPolynomialFit(dataset, params) {
   const uncertainty = params.model === 'linear'
     ? { intercept: regression.uncertainty[0], slope: regression.uncertainty[1], covariance: regression.covariance.to2DArray(), method: regression.uncertaintyMethod, degreesOfFreedom: regression.degreesOfFreedom }
     : { coefficients: regression.uncertainty, covariance: regression.covariance.to2DArray(), method: regression.uncertaintyMethod, degreesOfFreedom: regression.degreesOfFreedom };
+  const diagnostics = fitDiagnostics(y, regression.fitted, degree + 1, sigma, quality);
   return resultEnvelope({
     type: 'fit', model: params.model, status: 'success', message: '', parameters, peaks: [], x,
     yFit: regression.fitted, residuals: quality.residuals, rmse: quality.rmse, r2: quality.r2,
-    uncertainty, iterations: 1, roi: params.roi ?? null,
+    uncertainty, iterations: 1, roi: params.roi ?? null, diagnostics, ...diagnostics,
   }, dataset);
 }
 
@@ -280,7 +315,7 @@ function nonlinearPeakFit(dataset, params) {
   }
   const x = indices.map((i) => dataset.x[i]);
   const y = indices.map((i) => dataset.y[i]);
-  const sigma = params.weighted ? indices.map((i) => dataset.error[i]) : null;
+  const sigma = params.weighted === true ? indices.map((i) => dataset.error[i]) : null;
   const baseline = finite(params.baseline) ? params.baseline : 0;
   const peaks = seeds.map((seed, index) => {
     if (!finite(seed.center) || !finite(seed.height) || !finite(seed.fwhm) || seed.fwhm <= 0) {
@@ -352,6 +387,7 @@ function nonlinearPeakFit(dataset, params) {
   const fittedCurve = curveFor(parameterValues);
   const yFit = x.map((value) => fittedCurve(value));
   const quality = fitQuality(y, yFit);
+  const parameterCount = descriptors.length;
   let uncertainty = null;
   let covariance = null;
   let convergence = { reached: true, criterion: 'all parameters fixed', scaledStep: 0, tolerance: 1e-4 };
@@ -420,10 +456,13 @@ function nonlinearPeakFit(dataset, params) {
   });
   const status = convergence.reached ? 'success' : 'invalid';
   const message = convergence.reached ? '' : `Optimizer did not satisfy the stationarity criterion (scaled step ${convergence.scaledStep}).`;
+  const diagnostics = status === 'success'
+    ? fitDiagnostics(y, yFit, parameterCount, sigma, quality)
+    : fitDiagnostics(null, null, null);
   return resultEnvelope({
     type: 'fit', model, status, message, parameters: { baseline }, peaks: peakOutput,
     x, yFit, residuals: quality.residuals, rmse: quality.rmse, r2: quality.r2,
-    uncertainty, iterations, optimizerError, convergence, roi: params.roi ?? null,
+    uncertainty, iterations, optimizerError, convergence, roi: params.roi ?? null, diagnostics, ...diagnostics,
   }, dataset);
 }
 
@@ -476,6 +515,91 @@ function transformSimple(type, dataset, params) {
     if (error) for (let i = 0; i < error.length; i++) if (finite(error[i])) error[i] /= Math.abs(denominator);
   }
   return datasetResult(type, dataset, params, y, undefined, { error });
+}
+
+function despike(dataset, params) {
+  checkDataset(dataset);
+  const window = params.window;
+  const threshold = params.threshold;
+  const action = params.action ?? 'replace';
+  if (!Number.isInteger(window) || window < 3 || window % 2 === 0) fail('Despike window must be an odd integer of at least 3.');
+  if (window > dataset.x.length) fail('Despike window exceeds the dataset length.');
+  if (!(finite(threshold) && threshold > 0)) fail('Despike threshold must be positive and finite.');
+  if (!['replace', 'mask'].includes(action)) fail("Despike action must be 'replace' or 'mask'.");
+  const y = [...dataset.y];
+  const mask = dataset.mask == null ? Array(dataset.x.length).fill(false) : [...dataset.mask];
+  const half = Math.floor(window / 2);
+  const indices = [];
+  for (let i = 0; i < dataset.y.length; i++) {
+    if (isMasked(dataset, i) || !finite(dataset.y[i])) continue;
+    const neighbors = [];
+    for (let j = Math.max(0, i - half); j <= Math.min(dataset.y.length - 1, i + half); j++) {
+      if (!isMasked(dataset, j) && finite(dataset.y[j])) neighbors.push(dataset.y[j]);
+    }
+    // Cần ít nhất hai neighbor độc lập để ước lượng location/scale robust,
+    // đặc biệt ở biên của rolling window.
+    if (neighbors.length < 2) continue;
+    neighbors.sort((a, b) => a - b);
+    const middle = Math.floor(neighbors.length / 2);
+    const localMedian = neighbors.length % 2 ? neighbors[middle] : (neighbors[middle - 1] + neighbors[middle]) / 2;
+    const deviations = neighbors.map((value) => Math.abs(value - localMedian)).sort((a, b) => a - b);
+    const mad = deviations.length % 2 ? deviations[middle] : (deviations[middle - 1] + deviations[middle]) / 2;
+    // Khi MAD=0, dùng scale gắn với độ phân giải floating-point. Cách này bắt
+    // isolated jump xác định, nhưng giữ nguyên cửa sổ hằng tuyệt đối.
+    const scale = mad > 0 ? 1.4826 * mad : Number.EPSILON * Math.max(1, Math.abs(localMedian), Math.abs(dataset.y[i]));
+    if (Math.abs(dataset.y[i] - localMedian) > threshold * scale) {
+      indices.push(i);
+      if (action === 'replace') y[i] = localMedian;
+      else mask[i] = true;
+    }
+  }
+  return datasetResult('despike', dataset, params, y, {
+    type: 'despike', count: indices.length, indices,
+    method: 'rolling-median/MAD with 1.4826 scaling', action,
+  }, { mask });
+}
+
+function quantile(sorted, probability) {
+  if (!sorted.length) return null;
+  const position = (sorted.length - 1) * probability;
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  if (lower === upper) return sorted[lower];
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
+}
+
+function statistics(dataset, params) {
+  const indices = roiIndices(dataset, params.roi, { minimum: 1 });
+  const values = indices.map((i) => dataset.y[i]);
+  const sorted = [...values].sort((a, b) => a - b);
+  const n = values.length;
+  const mean = values.reduce((sum, value) => sum + value, 0) / n;
+  const sumSquares = values.reduce((sum, value) => sum + (value - mean) ** 2, 0);
+  const sampleSD = n >= 2 ? Math.sqrt(sumSquares / (n - 1)) : null;
+  const standardError = sampleSD == null ? null : sampleSD / Math.sqrt(n);
+  const warnings = [];
+  let area = null;
+  if (n < 2) warnings.push('At least two active points are required for area.');
+  let monotonic = n >= 2;
+  let direction = 0;
+  for (let pos = 1; pos < n; pos++) {
+    const delta = dataset.x[indices[pos]] - dataset.x[indices[pos - 1]];
+    if (delta === 0 || !finite(delta) || (direction && Math.sign(delta) !== direction)) monotonic = false;
+    else direction ||= Math.sign(delta);
+    if (indices[pos] !== indices[pos - 1] + 1) monotonic = false;
+  }
+  if (n >= 2 && !monotonic) warnings.push('Area is unavailable unless X is strictly monotonic with contiguous active pairs.');
+  if (!warnings.length && n >= 2) {
+    area = 0;
+    for (let pos = 1; pos < n; pos++) {
+      const a = indices[pos - 1]; const b = indices[pos];
+      area += 0.5 * (dataset.y[a] + dataset.y[b]) * Math.abs(dataset.x[b] - dataset.x[a]);
+    }
+  }
+  return resultEnvelope({ type: 'statistics', roi: params.roi ?? null, n, mean, sampleSD,
+    standardError, min: sorted[0], max: sorted[n - 1], median: quantile(sorted, 0.5),
+    q1: quantile(sorted, 0.25), q3: quantile(sorted, 0.75), area, warnings,
+    warning: warnings.length ? warnings.join(' ') : null }, dataset);
 }
 
 function crop(dataset, params) {
@@ -719,6 +843,15 @@ function detectPeaks(dataset, params) {
   return resultEnvelope({ type: 'peaks', peaks: chosen }, dataset);
 }
 
+function correctPeakBroadening(observedDegrees, instrumentDegrees, correction) {
+  const observed = observedDegrees * Math.PI / 180;
+  const instrumental = instrumentDegrees * Math.PI / 180;
+  let beta = observed;
+  if (correction === 'gaussian') beta = Math.sqrt(observed ** 2 - instrumental ** 2);
+  else if (correction === 'lorentzian') beta = observed - instrumental;
+  return !finite(beta) || beta <= 0 ? null : beta;
+}
+
 function xrd(dataset, params) {
   if (params.confirmed !== true) fail('XRD crystallite-size calculation requires explicit confirmation of the wavelength/profile assumptions.');
   if (!Array.isArray(params.peaks)) fail('XRD analysis requires a peaks array.');
@@ -729,16 +862,14 @@ function xrd(dataset, params) {
   const profile = params.profile ?? 'gaussian';
   if (!(finite(lambda) && lambda > 0 && finite(K) && K > 0 && finite(instrument) && instrument >= 0)) fail('Invalid XRD wavelength, shape factor, or instrumental FWHM.');
   if (!['none', 'gaussian', 'lorentzian'].includes(correction)) fail('Unknown XRD broadening correction.');
+  if (!['gaussian', 'lorentzian', 'pseudoVoigt'].includes(profile)) fail('Unknown XRD peak profile.');
   if (profile === 'pseudoVoigt' && correction !== 'none') fail('A single Gaussian/Lorentzian instrumental correction is not valid for a pseudo-Voigt profile.');
+  if (correction !== 'none' && correction !== profile) fail('Instrumental broadening correction must match the selected Gaussian or Lorentzian peak profile.');
   const peaks = params.peaks.map((peak, index) => {
     if (!finite(peak.center) || peak.center <= 0 || peak.center >= 180 || !finite(peak.fwhm) || peak.fwhm <= 0) fail(`Invalid XRD peak ${index + 1}.`);
     const theta = peak.center * Math.PI / 360;
-    const observed = peak.fwhm * Math.PI / 180;
-    const instrumental = instrument * Math.PI / 180;
-    let beta = observed;
-    if (correction === 'gaussian') beta = Math.sqrt(observed ** 2 - instrumental ** 2);
-    else if (correction === 'lorentzian') beta = observed - instrumental;
-    const warning = !finite(beta) || beta <= 0 ? 'Instrumental broadening is greater than or equal to the observed FWHM.' : null;
+    const beta = correctPeakBroadening(peak.fwhm, instrument, correction);
+    const warning = beta == null ? 'Instrumental broadening is greater than or equal to the observed FWHM.' : null;
     return {
       ...peak,
       dAngstrom: lambda / (2 * Math.sin(theta)),
@@ -819,6 +950,177 @@ function tauc(dataset, params) {
   });
 }
 
+function williamsonHall(dataset, params) {
+  if (params.confirmed !== true) fail('Williamson-Hall analysis requires explicit confirmation of the wavelength/profile assumptions.');
+  if (!Array.isArray(params.peaks) || params.peaks.length < 3) fail('Williamson-Hall analysis requires at least three peaks.');
+  const lambda = params.lambda ?? 1.5406;
+  const K = params.K ?? 0.9;
+  const instrument = params.instrumentFwhm ?? 0;
+  const correction = params.correction ?? 'none';
+  const profile = params.profile ?? 'gaussian';
+  if (!(finite(lambda) && lambda > 0 && finite(K) && K > 0 && finite(instrument) && instrument >= 0)) fail('Invalid Williamson-Hall wavelength, shape factor, or instrumental FWHM.');
+  if (!['none', 'gaussian', 'lorentzian'].includes(correction)) fail('Unknown Williamson-Hall broadening correction.');
+  if (!['gaussian', 'lorentzian', 'pseudoVoigt'].includes(profile)) fail('Unknown Williamson-Hall peak profile.');
+  if (profile === 'pseudoVoigt' && correction !== 'none') fail('A single Gaussian/Lorentzian instrumental correction is not valid for a pseudo-Voigt profile.');
+  if (correction !== 'none' && correction !== profile) fail('Instrumental broadening correction must match the selected Gaussian or Lorentzian peak profile.');
+  const warnings = [];
+  if (correction === 'none') warnings.push('No instrumental broadening correction was applied; beta uses the observed FWHM.');
+  const points = params.peaks.map((peak, index) => {
+    if (!finite(peak.center) || peak.center <= 0 || peak.center >= 180 || !finite(peak.fwhm) || peak.fwhm <= 0) fail(`Invalid Williamson-Hall peak ${index + 1}.`);
+    const thetaDegrees = peak.center / 2;
+    const theta = thetaDegrees * Math.PI / 180;
+    const beta = correctPeakBroadening(peak.fwhm, instrument, correction);
+    const warning = beta == null ? 'Instrumental broadening is greater than or equal to the observed FWHM.' : null;
+    if (warning) warnings.push(`Peak ${index + 1}: ${warning}`);
+    const x = beta == null ? null : 4 * Math.sin(theta);
+    const y = beta == null ? null : beta * Math.cos(theta);
+    return { ...peak, thetaDegrees, betaRadians: beta, x, y, warning };
+  });
+  if (points.some((point) => point.x == null || point.y == null)) {
+    return resultEnvelope({ type: 'williamsonHall', status: 'invalid', message: 'Instrumental broadening correction is non-physical for at least one peak.',
+      wavelengthAngstrom: lambda, shapeFactor: K, profile, correction, points, regression: null, r2: null, uncertainties: null,
+      warnings, warning: warnings.join(' ') }, dataset);
+  }
+  const x = points.map((point) => point.x); const y = points.map((point) => point.y);
+  const regression = polynomialRegression(x, y, null, 1);
+  if (!regression.valid) {
+    warnings.push(regression.message);
+    return resultEnvelope({ type: 'williamsonHall', status: 'invalid', message: regression.message,
+      wavelengthAngstrom: lambda, shapeFactor: K, profile, correction, points, regression: null, r2: null, uncertainties: null,
+      warnings, warning: warnings.join(' ') }, dataset);
+  }
+  const quality = fitQuality(y, regression.fitted);
+  const intercept = regression.coefficients[0];
+  const strain = regression.coefficients[1];
+  const physical = intercept > 0 && strain >= 0;
+  if (intercept <= 0) warnings.push('Williamson-Hall intercept must be positive to calculate crystallite size.');
+  if (strain < 0) warnings.push('Williamson-Hall microstrain cannot be negative in the isotropic UDM interpretation.');
+  const sizeNm = physical ? K * lambda / intercept / 10 : null;
+  const uncertainties = {
+    intercept: regression.uncertainty[0],
+    strain: regression.uncertainty[1],
+    sizeNm: physical ? K * lambda * regression.uncertainty[0] / (10 * intercept ** 2) : null,
+  };
+  const diagnostics = physical ? fitDiagnostics(y, regression.fitted, 2, null, quality) : fitDiagnostics(null, null, null);
+  const message = intercept <= 0 ? 'The Williamson-Hall fit has a non-positive intercept.'
+    : strain < 0 ? 'The Williamson-Hall fit has a negative microstrain slope.' : '';
+  return resultEnvelope({ type: 'williamsonHall', status: physical ? 'success' : 'invalid',
+    message, wavelengthAngstrom: lambda,
+    shapeFactor: K, profile, correction, points,
+    intercept, slope: strain, strain, uncertainty: { intercept: uncertainties.intercept, slope: uncertainties.strain },
+    regression: { intercept, strain, fitted: regression.fitted, residuals: quality.residuals, rmse: quality.rmse,
+      covariance: regression.covariance.to2DArray(), degreesOfFreedom: regression.degreesOfFreedom },
+    r2: quality.r2, sizeNm, uncertainties, diagnostics, ...diagnostics,
+    warnings, warning: warnings.length ? warnings.join(' ') : null }, dataset);
+}
+
+function cubicLattice(dataset, params) {
+  if (params.confirmed !== true) fail('Cubic-lattice calculation requires explicit confirmation of the wavelength and indexing assumptions.');
+  if (!Array.isArray(params.peaks) || params.peaks.length < 1) fail('Cubic-lattice calculation requires at least one reflection.');
+  const lambda = params.lambda ?? 1.5406;
+  const zeroShiftDegrees = params.zeroShiftDegrees ?? 0;
+  if (!(finite(lambda) && lambda > 0 && finite(zeroShiftDegrees))) fail('Invalid cubic-lattice wavelength or zero shift.');
+  const warnings = [];
+  const peaks = params.peaks.map((peak, index) => {
+    const indices = Array.isArray(peak.hkl) ? peak.hkl : [peak.h, peak.k, peak.l];
+    const [h, k, l] = indices;
+    if (!finite(peak.center) || indices.length !== 3 || !Number.isInteger(h) || !Number.isInteger(k) || !Number.isInteger(l) || (h === 0 && k === 0 && l === 0)) {
+      fail(`Reflection ${index + 1} needs a finite center and integer h, k, l not all zero.`);
+    }
+    const corrected2theta = peak.center - zeroShiftDegrees;
+    if (!(corrected2theta > 0 && corrected2theta < 180)) {
+      warnings.push(`Reflection ${index + 1} has an invalid corrected 2theta.`);
+      return { ...peak, h, k, l, corrected2theta, dAngstrom: null, aAngstrom: null };
+    }
+    const theta = corrected2theta * Math.PI / 360;
+    const dAngstrom = lambda / (2 * Math.sin(theta));
+    const aAngstrom = dAngstrom * Math.sqrt(h ** 2 + k ** 2 + l ** 2);
+    return { ...peak, h, k, l, corrected2theta, dAngstrom, aAngstrom };
+  });
+  const values = peaks.map((peak) => peak.aAngstrom).filter(finite);
+  if (values.length !== peaks.length) return resultEnvelope({ type: 'cubicLattice', status: 'invalid', message: 'At least one reflection has a non-physical corrected angle.',
+    wavelengthAngstrom: lambda, zeroShiftDegrees, aMeanAngstrom: null, sampleSD: null, standardError: null, peaks, warnings,
+    warning: warnings.join(' ') }, dataset);
+  const aMeanAngstrom = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const sampleSD = values.length >= 2 ? Math.sqrt(values.reduce((sum, value) => sum + (value - aMeanAngstrom) ** 2, 0) / (values.length - 1)) : null;
+  const standardError = sampleSD == null ? null : sampleSD / Math.sqrt(values.length);
+  if (values.length < 2) warnings.push('At least two reflections are required for sampleSD and standardError.');
+  return resultEnvelope({ type: 'cubicLattice', status: 'success', message: '', wavelengthAngstrom: lambda,
+    zeroShiftDegrees, aMeanAngstrom, sampleSD, standardError, peaks, warnings,
+    warning: warnings.length ? warnings.join(' ') : null }, dataset);
+}
+
+function opticalAlpha(value, signal, params, row, { allowNonPositive = false } = {}) {
+  if (signal === 'alpha') {
+    if (!(finite(value))) fail(`Absorption coefficient at row ${row + 1} must be finite for an Urbach fit.`);
+    if (!(value > 0)) {
+      if (allowNonPositive) return null;
+      fail(`Absorption coefficient at row ${row + 1} must be positive for an Urbach fit.`);
+    }
+    return value;
+  }
+  if (signal === 'reflectance') {
+    const reflectance = params.percent === true ? value / 100 : value;
+    if (!(reflectance > 0 && reflectance <= 1)) fail(`Reflectance at row ${row + 1} must be in its physical range.`);
+    const kubelkaMunk = (1 - reflectance) ** 2 / (2 * reflectance);
+    if (!(finite(kubelkaMunk))) fail(`Reflectance at row ${row + 1} must yield a finite Kubelka-Munk value for an Urbach fit.`);
+    if (!(kubelkaMunk > 0)) {
+      if (allowNonPositive) return null;
+      fail(`Reflectance at row ${row + 1} must yield a positive Kubelka-Munk value for an Urbach fit.`);
+    }
+    return kubelkaMunk;
+  }
+  let absorbance = value;
+  if (signal === 'transmittance') {
+    const transmittanceValue = params.percent === true ? value / 100 : value;
+    if (!(transmittanceValue > 0 && transmittanceValue <= 1)) fail(`Transmittance at row ${row + 1} must be in its physical range.`);
+    absorbance = -Math.log10(transmittanceValue);
+  }
+  if (!(finite(absorbance) && absorbance >= 0)) fail(`Absorbance at row ${row + 1} must be non-negative.`);
+  const alpha = 2.302585092994046 * absorbance / (params.thicknessNm * 1e-7);
+  if (!(finite(alpha))) fail(`Absorption coefficient at row ${row + 1} must be finite for an Urbach fit.`);
+  if (!(alpha > 0)) {
+    if (allowNonPositive) return null;
+    fail(`Absorption coefficient at row ${row + 1} must be positive for an Urbach fit.`);
+  }
+  return alpha;
+}
+
+function urbach(dataset, params) {
+  assertMonotonic(dataset);
+  if (params.confirmed !== true) fail('Urbach analysis requires explicit confirmation of the signal and optical assumptions.');
+  if (!['wavelength', 'energy'].includes(params.xMode) || !['alpha', 'absorbance', 'transmittance', 'reflectance'].includes(params.signal)) fail('Unknown Urbach xMode or signal type.');
+  if (params.roi == null) fail('Urbach analysis requires an explicit ROI with at least three points.');
+  if (!Array.isArray(params.roi) || params.roi.length !== 2 || !finite(params.roi[0]) || !finite(params.roi[1]) || params.roi[0] > params.roi[1]) fail('ROI must be [min, max] with finite min <= max.');
+  if ((params.signal === 'absorbance' || params.signal === 'transmittance') && !(finite(params.thicknessNm) && params.thicknessNm > 0)) fail('A positive thicknessNm is required to convert optical signal to absorption coefficient.');
+  const x = Array(dataset.x.length); const y = Array(dataset.y.length);
+  let outsideRoiCount = 0;
+  for (let i = 0; i < x.length; i++) {
+    if (isMasked(dataset, i)) { x[i] = params.xMode === 'wavelength' && finite(dataset.x[i]) && dataset.x[i] !== 0 ? HC_EV_NM / dataset.x[i] : dataset.x[i]; y[i] = null; continue; }
+    const energy = params.xMode === 'wavelength' ? HC_EV_NM / dataset.x[i] : dataset.x[i];
+    if (!(finite(energy) && energy > 0)) fail(`Photon energy/wavelength at row ${i + 1} is invalid.`);
+    const inRoi = energy >= params.roi[0] && energy <= params.roi[1];
+    const alpha = opticalAlpha(dataset.y[i], params.signal, params, i, { allowNonPositive: !inRoi });
+    x[i] = energy;
+    if (alpha == null) { y[i] = null; outsideRoiCount += 1; }
+    else y[i] = Math.log(alpha);
+  }
+  const temporary = { ...dataset, x, y, error: null };
+  let fitResult;
+  try { fitResult = linearOrPolynomialFit(temporary, { model: 'linear', roi: params.roi, weighted: false }).result; }
+  catch (error) { if (error instanceof AnalysisError) fitResult = { type: 'fit', status: 'invalid', message: error.message, diagnostics: fitDiagnostics(null, null, null) }; else throw error; }
+  const warnings = params.signal === 'reflectance' ? ['Reflectance Urbach output is an apparent proxy based on Kubelka-Munk F(R).'] : [];
+  if (outsideRoiCount) warnings.push(`${outsideRoiCount} non-positive alpha-equivalent point(s) outside the ROI were returned as null.`);
+  let status = 'invalid'; let EuEv = null; let message = fitResult.message || '';
+  if (fitResult.status === 'success' && fitResult.parameters.slope > 0) { status = 'success'; EuEv = 1 / fitResult.parameters.slope; message = ''; }
+  else if (fitResult.status === 'success') message = 'Urbach fit slope must be positive.';
+  const spectralTerm = params.signal === 'reflectance' ? 'F(R)' : 'α';
+  return datasetResult('urbach', dataset, params, y, { type: 'urbach', status, message, EuEv, fit: fitResult,
+    xMode: params.xMode, signal: params.signal, thicknessNm: params.thicknessNm ?? null, apparentProxy: params.signal === 'reflectance',
+    outsideRoiCount, warnings },
+  { x, error: undefined, xLabel: 'Photon energy', xUnit: 'eV', yLabel: `ln(${spectralTerm})${params.signal === 'reflectance' ? ' apparent proxy' : ''}`, yUnit: '' });
+}
+
 function peakRatio(dataset, params) {
   if (!Array.isArray(params.peaks) || !Number.isInteger(params.a) || !Number.isInteger(params.b)) fail('Peak ratio requires peaks and integer indices a and b.');
   const metric = params.metric ?? 'height';
@@ -834,6 +1136,8 @@ export function runAnalysis({ type, dataset, params = {} }) {
   switch (type) {
     case 'crop': return crop(dataset, params);
     case 'offset': case 'scale': case 'normalize': return transformSimple(type, dataset, params);
+    case 'despike': return despike(dataset, params);
+    case 'statistics': return statistics(dataset, params);
     case 'resample': return resample(dataset, params);
     case 'movingAverage': return movingAverage(dataset, params);
     case 'savgol': return savgol(dataset, params);
@@ -845,6 +1149,9 @@ export function runAnalysis({ type, dataset, params = {} }) {
     case 'xrd': return xrd(dataset, params);
     case 'transmittance': return transmittance(dataset, params);
     case 'tauc': return tauc(dataset, params);
+    case 'williamsonHall': return williamsonHall(dataset, params);
+    case 'cubicLattice': return cubicLattice(dataset, params);
+    case 'urbach': return urbach(dataset, params);
     case 'peakRatio': return peakRatio(dataset, params);
     default: fail(`Unknown analysis type: ${type}`);
   }

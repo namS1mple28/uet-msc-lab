@@ -12,7 +12,7 @@ export function makeFigureSpec(name = 'Figure 1') {
   return {
     id: `fig_${crypto.randomUUID?.() || Date.now().toString(36)}`,
     name, layout: '1x1', activePanel: 0, linkAxes: false,
-    widthMm: 180, heightMm: 120, dpi: 300, panels: [makePanel()],
+    widthMm: 180, heightMm: 120, dpi: 300, pageBackground: '#ffffff', panels: [makePanel()],
     createdAt: new Date().toISOString()
   };
 }
@@ -22,6 +22,12 @@ export function makePanel() {
     title: '', xLabel: '', yLabel: '', y2Label: '', tickFormat: 'auto',
     xScale: 'linear', yScale: 'linear', y2Scale: 'linear', reverseX: false,
     fontSize: 11, lineWidth: 1.6, markerSize: 5, showLegend: true,
+    plotBackground: '#ffffff',
+    margins: { l: 70, r: 70, t: 42, b: 62 },
+    grid: { x: true, y: true, minor: false, color: '#e7ebed', width: 1, dash: 'solid' },
+    axes: { color: '#737b85', width: 1, mirror: true, zeroLine: true, tickDirection: 'outside' },
+    ticks: { xStep: null, yStep: null, xAngle: 0, yAngle: 0 },
+    legend: { visible: true, position: 'inside-top-left', x: .01, y: .99, xanchor: 'left', yanchor: 'top', orientation: 'v', background: '#ffffff', borderColor: '#d7dcdf', borderWidth: .5, fontSize: 10 },
     ranges: { x: [null, null], y: [null, null], y2: [null, null] },
     series: [], annotations: [], references: []
   };
@@ -31,16 +37,49 @@ export function panelCount(layout) { return ({ '1x1': 1, '1x2': 2, '2x1': 2, '2x
 
 export function normalizeFigure(figure) {
   const fig = figure || makeFigureSpec();
-  fig.layout ||= '1x1'; fig.activePanel = Math.max(0, Number(fig.activePanel) || 0);
-  fig.linkAxes = Boolean(fig.linkAxes); fig.widthMm = positive(fig.widthMm, 180); fig.heightMm = positive(fig.heightMm, 120); fig.dpi = positive(fig.dpi, 300);
-  fig.panels ||= [];
+  fig.layout ||= '1x1'; fig.activePanel = Math.max(0, Math.floor(Number(fig.activePanel) || 0));
+  fig.linkAxes = Boolean(fig.linkAxes); fig.widthMm = positive(fig.widthMm, 180); fig.heightMm = positive(fig.heightMm, 120); fig.dpi = positive(fig.dpi, 300); fig.pageBackground ||= '#ffffff';
+  if (!Array.isArray(fig.panels)) fig.panels = [];
   while (fig.panels.length < panelCount(fig.layout)) fig.panels.push(makePanel());
   fig.panels = fig.panels.slice(0, panelCount(fig.layout)).map(panel => {
     const defaults = makePanel();
-    return { ...defaults, ...panel, ranges: { ...defaults.ranges, ...(panel.ranges || {}) }, series: Array.isArray(panel.series) ? panel.series : [], annotations: Array.isArray(panel.annotations) ? panel.annotations : [], references: Array.isArray(panel.references) ? panel.references : [] };
+    const migrated = { ...panel };
+    // FigureSpec v1 aliases are retained while newer nested style fields are normalized.
+    const legacy = values => Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined));
+    if (!migrated.margins) { const values = legacy({ l: panel.marginLeft, r: panel.marginRight, t: panel.marginTop, b: panel.marginBottom }); if (Object.keys(values).length) migrated.margins = values; }
+    if (!migrated.grid) { const values = legacy({ x: panel.showGridX, y: panel.showGridY, minor: panel.minorGrid, color: panel.gridColor, width: panel.gridWidth, dash: panel.gridDash }); if (Object.keys(values).length) migrated.grid = values; }
+    if (!migrated.axes) { const values = legacy({ color: panel.axisColor, width: panel.axisWidth, mirror: panel.mirrorAxes, zeroLine: panel.zeroLine, tickDirection: panel.tickDirection }); if (Object.keys(values).length) migrated.axes = values; }
+    if (!migrated.ticks) { const values = legacy({ xStep: panel.xTickStep, yStep: panel.yTickStep, xAngle: panel.xTickAngle, yAngle: panel.yTickAngle }); if (Object.keys(values).length) migrated.ticks = values; }
+    if (!migrated.legend) { const values = legacy({ visible: panel.showLegend, position: panel.legendPosition, x: panel.legendX, y: panel.legendY, xanchor: panel.legendXAnchor, yanchor: panel.legendYAnchor, orientation: panel.legendOrientation, background: panel.legendBackground, borderColor: panel.legendBorderColor, borderWidth: panel.legendBorderWidth, fontSize: panel.legendFontSize }); if (Object.keys(values).length) migrated.legend = values; }
+    const merged = { ...defaults, ...migrated, margins: { ...defaults.margins, ...(migrated.margins || {}) }, grid: { ...defaults.grid, ...(migrated.grid || {}) }, axes: { ...defaults.axes, ...(migrated.axes || {}) }, ticks: { ...defaults.ticks, ...(migrated.ticks || {}) }, legend: { ...defaults.legend, ...(migrated.legend || {}) }, ranges: { ...defaults.ranges, ...(panel.ranges || {}) }, series: Array.isArray(panel.series) ? panel.series : [], annotations: Array.isArray(panel.annotations) ? panel.annotations : [], references: Array.isArray(panel.references) ? panel.references : [] };
+    for (const key of ['l', 'r', 't', 'b']) merged.margins[key] = nonNegative(merged.margins[key], defaults.margins[key]);
+    merged.grid.width = nonNegative(merged.grid.width, defaults.grid.width);
+    merged.axes.width = nonNegative(merged.axes.width, defaults.axes.width);
+    merged.legend.position ||= 'inside-top-left';
+    merged.series = merged.series.map(series => ({ color: '#167d86', dash: 'solid', marker: 'circle', mode: 'lines', visible: true, opacity: 1, lineShape: 'linear', fill: 'none', lineWidth: 1.6, markerSize: 5, errorBars: false, errorColor: null, errorWidth: 1, errorCap: 2, ...series, name: series.name || '' }));
+    return merged;
   });
   fig.activePanel = Math.min(fig.activePanel, fig.panels.length - 1);
   return fig;
+}
+
+/** Pure theme transform: returns a normalized copy and never mutates its input. */
+export function applyFigureTheme(figure, name = 'journal') {
+  const out = normalizeFigure(copy(figure || makeFigureSpec()));
+  const themes = {
+    journal: { pageBackground: '#ffffff', fontSize: 10, lineWidth: 1.4, markerSize: 4, plotBackground: '#ffffff', grid: { x: false, y: true, color: '#d9dddf', width: 1, dash: 'solid' }, axes: { color: '#202330', width: 1, mirror: false, zeroLine: false, tickDirection: 'outside' }, legend: { orientation: 'v', background: '#ffffff', borderWidth: 0, fontSize: 9 } },
+    presentation: { pageBackground: '#f7f9fb', fontSize: 14, lineWidth: 2.4, markerSize: 7, plotBackground: '#ffffff', grid: { x: true, y: true, color: '#e1e7eb', width: 1, dash: 'solid' }, axes: { color: '#26344a', width: 2, mirror: true, zeroLine: true, tickDirection: 'outside' }, legend: { orientation: 'h', background: '#ffffff', borderWidth: 0, fontSize: 12 } },
+    xrd: { pageBackground: '#ffffff', fontSize: 10, lineWidth: 1.2, markerSize: 3, plotBackground: '#ffffff', grid: { x: false, y: true, color: '#e7ebed', width: 1, dash: 'dot' }, axes: { color: '#202330', width: 1, mirror: true, zeroLine: false, tickDirection: 'outside' }, legend: { orientation: 'v', background: '#ffffff', borderWidth: .5, fontSize: 9 } }
+  };
+  const theme = themes[name] || themes.journal;
+  Object.assign(out, { pageBackground: theme.pageBackground });
+  out.panels = out.panels.map(panel => ({
+    ...panel, fontSize: theme.fontSize, lineWidth: theme.lineWidth, markerSize: theme.markerSize,
+    plotBackground: theme.plotBackground,
+    grid: { ...panel.grid, ...theme.grid }, axes: { ...panel.axes, ...theme.axes }, legend: { ...panel.legend, ...theme.legend },
+    series: panel.series.map(series => ({ ...series, lineWidth: theme.lineWidth, markerSize: theme.markerSize }))
+  }));
+  return out;
 }
 
 export function addSeries(figure, dataset, panelIndex = figure.activePanel || 0) {
@@ -69,6 +108,7 @@ export function reduceForPreview(xs, ys, maximum = 12000) {
 
 function labelWithUnit(label, unit) { return unit ? `${label || ''} (${unit})` : (label || ''); }
 function positive(value, fallback) { return finite(value) && Number(value) > 0 ? Number(value) : fallback; }
+function nonNegative(value, fallback) { return finite(value) && Number(value) >= 0 ? Number(value) : fallback; }
 function seriesMode(series) {
   if (series.mode === 'sticks') return 'lines';
   if (series.mode === 'scatter' || series.mode === 'markers') return 'markers';
@@ -95,21 +135,27 @@ function baseAxis(title, range, tickformat, type, fontSize, extras = {}) {
 }
 function plotlyLayout(panel, isActive) {
   const fontSize = positive(panel.fontSize, 11), tickformat = panel.tickFormat === 'auto' ? undefined : panel.tickFormat;
+  const margins = { l: nonNegative(panel.margins?.l, 70), r: nonNegative(panel.margins?.r, 70), t: nonNegative(panel.margins?.t, 42), b: nonNegative(panel.margins?.b, 62) };
+  const grid = panel.grid || {}, axes = panel.axes || {}, ticks = panel.ticks || {}, legend = panel.legend || {};
+  const legendPosition = { 'inside-top-left': [.01, .99, 'left', 'top'], 'inside-top-right': [.99, .99, 'right', 'top'], 'outside-right': [1.02, .99, 'left', 'top'], bottom: [.5, -.16, 'center', 'top'] }[legend.position] || null;
+  const lx = legendPosition ? legendPosition[0] : legend.x, ly = legendPosition ? legendPosition[1] : legend.y;
   const xScale = panel.xScale === 'log' ? 'log' : 'linear', yScale = panel.yScale === 'log' ? 'log' : 'linear', y2Scale = panel.y2Scale === 'log' ? 'log' : 'linear';
   const xRange = rangeFor(panel, 'x', xScale === 'log', panel.reverseX);
   const shapes = (panel.references || []).filter(reference => finite(reference.value)).map(reference => {
-    const line = { color: reference.color || '#a45d55', dash: reference.dash || 'dot', width: positive(reference.width, 1.3) };
-    return reference.type === 'hline' ? { type: 'line', x0: 0, x1: 1, xref: 'paper', y0: Number(reference.value), y1: Number(reference.value), line } : { type: 'line', y0: 0, y1: 1, yref: 'paper', x0: Number(reference.value), x1: Number(reference.value), line };
+    const line = { color: reference.color || '#a45d55', dash: reference.dash || 'dot', width: nonNegative(reference.width, 1.3) };
+    const shape = reference.type === 'hline' ? { type: 'line', x0: 0, x1: 1, xref: 'paper', y0: Number(reference.value), y1: Number(reference.value), line } : { type: 'line', y0: 0, y1: 1, yref: 'paper', x0: Number(reference.value), x1: Number(reference.value), line };
+    if (reference.label || reference.text) shape.label = { text: reference.label || reference.text, font: { size: positive(reference.fontSize, 10), color: reference.color || '#a45d55' } };
+    return shape;
   });
   return {
-    margin: { l: 70, r: 70, t: 42, b: 62 }, showlegend: panel.showLegend !== false,
-    legend: { font: { size: Math.max(8, fontSize - 1) }, x: .01, y: .99, bgcolor: 'rgba(255,255,255,.82)', bordercolor: '#d7dcdf', borderwidth: .5 },
-    font: { family: 'NotoSans, Arial, sans-serif', size: fontSize, color: '#262333' }, paper_bgcolor: '#ffffff', plot_bgcolor: '#ffffff', hovermode: 'closest',
+    margin: margins, showlegend: legend.visible !== false && panel.showLegend !== false,
+    legend: { font: { size: positive(legend.fontSize, Math.max(8, fontSize - 1)) }, x: Number.isFinite(Number(lx)) ? Number(lx) : .01, y: Number.isFinite(Number(ly)) ? Number(ly) : .99, xanchor: legendPosition ? legendPosition[2] : (legend.xanchor || 'left'), yanchor: legendPosition ? legendPosition[3] : (legend.yanchor || 'top'), orientation: legend.orientation || 'v', bgcolor: legend.background || 'rgba(255,255,255,.82)', bordercolor: legend.borderColor || '#d7dcdf', borderwidth: Number(legend.borderWidth) || 0 },
+    font: { family: 'NotoSans, Arial, sans-serif', size: fontSize, color: '#262333' }, paper_bgcolor: panel.plotBackground || '#ffffff', plot_bgcolor: panel.plotBackground || '#ffffff', hovermode: 'closest',
     title: panel.title ? { text: panel.title, font: { size: fontSize + 3, color: '#262333' } } : undefined,
-    xaxis: baseAxis(panel.xLabel || 'X', xRange, tickformat, xScale, fontSize, { autorange: panel.reverseX && !xRange ? 'reversed' : undefined }),
-    yaxis: baseAxis(panel.yLabel || 'Y', rangeFor(panel, 'y', yScale === 'log'), tickformat, yScale, fontSize),
-    yaxis2: baseAxis(panel.y2Label || 'Y₂', rangeFor(panel, 'y2', y2Scale === 'log'), tickformat, y2Scale, fontSize, { overlaying: 'y', side: 'right', showgrid: false }),
-    annotations: (panel.annotations || []).filter(annotation => finite(annotation.x) && finite(annotation.y)).map(annotation => ({ x: Number(annotation.x), y: Number(annotation.y), text: annotation.text || '', showarrow: annotation.showarrow !== false, arrowhead: 2, font: { size: positive(annotation.fontSize, fontSize), color: annotation.color || '#343846' } })),
+    xaxis: baseAxis(panel.xLabel || 'X', xRange, tickformat, xScale, fontSize, { autorange: panel.reverseX && !xRange ? 'reversed' : undefined, showgrid: grid.x !== false, minor: grid.minor ? { showgrid: true, gridcolor: grid.color || '#e7ebed', gridwidth: nonNegative(grid.width, 1) / 2 } : undefined, gridcolor: grid.color || '#e7ebed', gridwidth: nonNegative(grid.width, 1), griddash: grid.dash || 'solid', zeroline: axes.zeroLine !== false, linecolor: axes.color || '#737b85', linewidth: nonNegative(axes.width, 1), mirror: axes.mirror !== false, ticks: axes.tickDirection || 'outside', dtick: finite(ticks.xStep) ? Number(ticks.xStep) : undefined, tickangle: Number(ticks.xAngle) || 0 }),
+    yaxis: baseAxis(panel.yLabel || 'Y', rangeFor(panel, 'y', yScale === 'log'), tickformat, yScale, fontSize, { showgrid: grid.y !== false, minor: grid.minor ? { showgrid: true, gridcolor: grid.color || '#e7ebed', gridwidth: nonNegative(grid.width, 1) / 2 } : undefined, gridcolor: grid.color || '#e7ebed', gridwidth: nonNegative(grid.width, 1), griddash: grid.dash || 'solid', zeroline: axes.zeroLine !== false, linecolor: axes.color || '#737b85', linewidth: nonNegative(axes.width, 1), mirror: axes.mirror !== false, ticks: axes.tickDirection || 'outside', dtick: finite(ticks.yStep) ? Number(ticks.yStep) : undefined, tickangle: Number(ticks.yAngle) || 0 }),
+    yaxis2: baseAxis(panel.y2Label || 'Y₂', rangeFor(panel, 'y2', y2Scale === 'log'), tickformat, y2Scale, fontSize, { overlaying: 'y', side: 'right', showgrid: false, linecolor: axes.color || '#737b85', linewidth: nonNegative(axes.width, 1), mirror: axes.mirror !== false, ticks: axes.tickDirection || 'outside' }),
+    annotations: (panel.annotations || []).filter(annotation => finite(annotation.x) && finite(annotation.y)).map(annotation => ({ x: Number(annotation.x), y: Number(annotation.y), text: annotation.text || annotation.label || '', showarrow: annotation.showarrow !== false, arrowhead: 2, font: { size: positive(annotation.fontSize, fontSize), color: annotation.color || '#343846' } })),
     shapes, dragmode: isActive ? 'zoom' : false
   };
 }
@@ -132,7 +178,7 @@ function panelTraces(panel, datasetMap, { preview = true } = {}) {
       data = { x, y, err: Array(x.length).fill(null) };
     }
     const useErrors = Boolean(!sticks && series.errorBars && data.err.some(finite));
-    traces.push({ type: 'scatter', mode: seriesMode(series), x: data.x, y: data.y, name: series.name || dataset.name, yaxis: series.axis === 'y2' ? 'y2' : 'y', line: { color: series.color || '#167d86', width: positive(series.lineWidth, positive(panel.lineWidth, 1.6)), dash: series.dash || 'solid' }, marker: { symbol: series.marker === 'none' ? 'circle' : (series.marker || 'circle'), color: series.color || '#167d86', size: positive(series.markerSize, positive(panel.markerSize, 5)) }, error_y: useErrors ? { type: 'data', array: data.err.map(value => finite(value) ? value : 0), visible: true, thickness: 1, width: 2 } : undefined, hovertemplate: '%{x:.7g}, %{y:.7g}<extra>%{fullData.name}</extra>' });
+    traces.push({ type: 'scatter', mode: seriesMode(series), x: data.x, y: data.y, name: series.name || dataset.name, opacity: finite(series.opacity) ? Math.max(0, Math.min(1, Number(series.opacity))) : 1, yaxis: series.axis === 'y2' ? 'y2' : 'y', fill: series.fill && series.fill !== 'none' ? series.fill : undefined, line: { color: series.color || '#167d86', width: nonNegative(series.lineWidth, nonNegative(panel.lineWidth, 1.6)), dash: series.dash || 'solid', shape: ['linear', 'hv', 'vh', 'spline'].includes(series.lineShape) ? series.lineShape : 'linear' }, marker: { symbol: series.marker === 'none' ? 'circle' : (series.marker || 'circle'), color: series.color || '#167d86', size: positive(series.markerSize, positive(panel.markerSize, 5)) }, error_y: useErrors ? { type: 'data', array: data.err.map(value => finite(value) ? value : 0), visible: true, color: series.errorColor || series.color || '#167d86', thickness: nonNegative(series.errorWidth, 1), width: nonNegative(series.errorCap, 2) } : undefined, hovertemplate: '%{x:.7g}, %{y:.7g}<extra>%{fullData.name}</extra>' });
   }
   return traces;
 }
@@ -143,7 +189,7 @@ function roiFromEvent(event) {
 }
 
 export async function renderFigureGrid(container, figure, datasets, { onPanelSelect, onRoi, onROI, previewOverlay } = {}) {
-  normalizeFigure(figure); container.className = `msds-plot-grid layout-${figure.layout}`; container.replaceChildren();
+  normalizeFigure(figure); container.className = `msds-plot-grid layout-${figure.layout}`; container.style.background = figure.pageBackground || '#ffffff'; container.replaceChildren();
   const datasetMap = new Map(datasets.map(dataset => [dataset.id, dataset])), plotNodes = [];
   await Promise.all(figure.panels.map(async (panel, index) => {
     const panelEl = document.createElement('div'); panelEl.className = `msds-plot-panel ${index === figure.activePanel ? 'active' : ''}`; panelEl.dataset.panel = index;
@@ -176,6 +222,7 @@ export async function exportPanel(panelEl, figure, datasets, kind, filename = 'f
     const rows = ['panel,series,x,y,error']; panels.forEach((panel, panelOffset) => panel.series.forEach(series => { const dataset = datasetMap.get(series.datasetId); if (!dataset) return; const data = cleanData(dataset, series); data.x.forEach((x, i) => rows.push([String.fromCharCode(65 + (settings.panelIndex ?? panelOffset)), csvCell(series.name || dataset.name), x, data.y[i], data.err[i] ?? ''].join(','))); }));
     download(rows.join('\n'), `${filename}.csv`, 'text/csv;charset=utf-8'); return;
   }
+  settings.pageBackground = fig.pageBackground || '#ffffff';
   const svg = await figureSvg(panels, fig.layout, datasetMap, settings);
   if (kind === 'svg') { download(svg.text, `${filename}.svg`, 'image/svg+xml;charset=utf-8'); return; }
   if (kind === 'png') { downloadBlob(await svgToPng(svg.text, svg.pixelWidth, svg.pixelHeight, settings.dpi, settings.widthMm, settings.heightMm), `${filename}.png`); return; }
@@ -196,7 +243,7 @@ async function figureSvg(panels, figureLayout, datasetMap, settings) {
     const label = `<text x="${left + 10}" y="${top + 22}" font-family="NotoSans,Arial,sans-serif" font-size="${Math.max(14, Math.round(panelHeight * .027))}" font-weight="700" fill="#262333">(${String.fromCharCode(97 + index)})</text>`;
     return panel + label;
   }).join('');
-  return { text: `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${settings.widthMm}mm" height="${settings.heightMm}mm" viewBox="0 0 ${pixelWidth} ${pixelHeight}"><style>${embeddedFontCss()}svg text{font-family:NotoSans,Arial,sans-serif!important}</style><rect width="100%" height="100%" fill="#fff"/>${nested}</svg>`, panelSvgs: svgs, pixelWidth, pixelHeight, panelWidth, panelHeight, rows, cols };
+  return { text: `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${settings.widthMm}mm" height="${settings.heightMm}mm" viewBox="0 0 ${pixelWidth} ${pixelHeight}"><style>${embeddedFontCss()}svg text{font-family:NotoSans,Arial,sans-serif!important}</style><rect width="100%" height="100%" fill="${settings.pageBackground || '#fff'}"/>${nested}</svg>`, panelSvgs: svgs, pixelWidth, pixelHeight, panelWidth, panelHeight, rows, cols };
 }
 function namespaceSvg(text, prefix) {
   const root = new DOMParser().parseFromString(text, 'image/svg+xml').documentElement, body = root.innerHTML, ids = [...body.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]); let namespaced = body;

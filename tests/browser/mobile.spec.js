@@ -7,7 +7,7 @@ test('touch/mobile layout supports plotting and reagent deselection', async ({ p
   await expect(page.locator('#msc-data-studio')).toBeVisible();
   await page.locator('#msds-samples').selectOption('1');
   await expect(page.locator('#msds-plot-0 .scatterlayer')).toBeVisible();
-  await page.getByRole('button', { name: 'Bảng' }).tap();
+  await page.getByRole('tab', { name: 'Bảng' }).tap();
   await expect(page.locator('#msds-data-table')).toBeVisible();
 
   await page.goto('/index.html');
