@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Materials Data Studio — xử lý phổ XRD, Raman, FTIR, UV–Vis/Tauc và biên tập figure ngay trong browser.">
+  <title>Materials Data Studio · UET MSC</title>
+  <!--__STUDIO_CSS__-->
+</head>
+<body>
+<section id="msc-data-studio" class="msds" aria-label="Materials Data Studio">
+  <header class="msds-topbar">
+    <div class="msds-brand"><span class="msds-mark">◈</span><span>Materials Data Studio</span><small>MSC · UET</small></div>
+    <nav class="msds-nav" aria-label="Điều hướng studio">
+      <button class="msds-navbtn active" data-msds-view="workspace">Không gian làm việc</button>
+      <button class="msds-navbtn" data-msds-view="tutorial">Hướng dẫn</button>
+      <a class="msds-navbtn" href="index.html">Phòng Lab</a>
+      <a class="msds-navbtn" href="vat-lieu.html">Xưởng vật liệu</a>
+      <a class="msds-navbtn" href="nguyen-tu.html">Bảng tuần hoàn</a>
+    </nav>
+    <div class="msds-actions">
+      <span id="msds-save-state" class="msds-save-state">Chưa lưu</span>
+      <button id="msds-undo" class="msds-iconbtn" title="Hoàn tác" disabled>↶</button>
+      <button id="msds-redo" class="msds-iconbtn" title="Làm lại" disabled>↷</button>
+      <button id="msds-save" class="msds-btn quiet">Lưu project</button>
+      <button id="msds-load" class="msds-btn quiet">Mở autosave</button>
+      <button id="msds-import-project-open" class="msds-btn quiet">Nhập project</button>
+      <button id="msds-export-project" class="msds-btn primary">Xuất project</button>
+      <input id="msds-import-project" type="file" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <main class="msds-shell" data-msds-viewpanel="workspace">
+    <aside class="msds-sidebar">
+      <section class="msds-side-section">
+        <div class="msds-section-title"><h2>Dữ liệu</h2><button id="msds-new-figure" class="msds-smallbtn">+ Figure</button></div>
+        <div class="msds-import-row" id="msds-dropzone">
+          <label for="msds-file" class="msds-btn primary">Nhập / thả tệp</label>
+          <input id="msds-file" type="file" accept=".csv,.txt,.dat,.tsv,.xlsx,.xls" multiple hidden>
+          <button id="msds-paste-open" class="msds-btn quiet">Dán dữ liệu</button>
+        </div>
+        <select id="msds-samples" class="msds-select"><option value="">— Dữ liệu mẫu —</option></select>
+        <div id="msds-dataset-list" class="msds-dataset-list" aria-live="polite"></div>
+      </section>
+      <section class="msds-side-section msds-project-summary">
+        <div class="msds-section-title"><h2>Project</h2><button id="msds-rename-project" class="msds-textbtn">Đổi tên</button></div>
+        <p id="msds-project-name">Project chưa đặt tên</p>
+        <p id="msds-project-meta">0 dataset · 0 figure</p>
+      </section>
+    </aside>
+
+    <section class="msds-workspace">
+      <div class="msds-toolbar">
+        <div class="msds-crumb"><span id="msds-active-name">Chọn hoặc nhập dữ liệu</span><span id="msds-active-meta"></span></div>
+        <div class="msds-toolbar-actions">
+          <label>Layout <select id="msds-layout" class="msds-select compact"><option value="1x1">1 × 1</option><option value="1x2">1 × 2</option><option value="2x1">2 × 1</option><option value="2x2">2 × 2</option></select></label>
+          <button id="msds-add-series" class="msds-btn quiet" disabled>+ Series</button>
+          <button id="msds-fit-view" class="msds-btn quiet">Khung nhìn</button>
+        </div>
+      </div>
+      <div id="msds-plot-grid" class="msds-plot-grid layout-1x1"></div>
+      <div id="msds-status" class="msds-status" role="status">Sẵn sàng. Nhập dữ liệu để bắt đầu.</div>
+    </section>
+
+    <aside class="msds-inspector">
+      <div class="msds-inspector-tabs" role="tablist">
+        <button class="active" data-msds-tab="analysis">Phân tích</button>
+        <button data-msds-tab="figure">Figure</button>
+        <button data-msds-tab="table">Bảng</button>
+      </div>
+      <section id="msds-tab-analysis" class="msds-tabpanel active">
+        <div class="msds-card">
+          <h3>Chuỗi xử lý</h3>
+          <div class="msds-control-grid">
+            <label>Engine<select id="msds-operation" class="msds-select"><option value="crop">Crop</option><option value="offset">Offset</option><option value="scale">Scale</option><option value="normalize">Normalize</option><option value="resample">Resample</option><option value="movingAverage">Moving average</option><option value="savgol">Savitzky–Golay</option><option value="derivative">Derivative</option><option value="integrate">Integrate</option><option value="baseline">Baseline</option><option value="detectPeaks">Detect peaks</option><option value="fit">Peak fitting</option><option value="xrd">XRD crystallite size</option><option value="transmittance">Absorbance</option><option value="tauc">Tauc band gap</option><option value="peakRatio">Peak ratio</option></select></label>
+            <label>ROI (min, max)<div class="msds-inline"><input id="msds-roi-min" type="number" placeholder="min"><input id="msds-roi-max" type="number" placeholder="max"></div></label>
+          </div>
+          <div id="msds-operation-controls" class="msds-operation-controls"></div>
+          <div class="msds-preview-row"><button id="msds-preview" class="msds-btn quiet" disabled>Xem trước</button><button id="msds-apply" class="msds-btn primary" disabled>Áp dụng</button><button id="msds-cancel" class="msds-textbtn" disabled>Hủy</button></div>
+          <p class="msds-hint">Preview luôn so với baseline hiện hành; “Áp dụng” tạo dataset dẫn xuất, không sửa raw data.</p>
+        </div>
+        <div id="msds-analysis-result" class="msds-card msds-results"><h3>Kết quả</h3><p class="msds-muted">Chưa có kết quả phân tích.</p></div>
+      </section>
+      <section id="msds-tab-figure" class="msds-tabpanel">
+        <div class="msds-card"><h3>Figure panel</h3>
+          <div class="msds-control-grid"><label>Panel<select id="msds-figure-panel" class="msds-select"></select></label><label>Series<select id="msds-series-select" class="msds-select"></select></label></div>
+          <div class="msds-control-grid"><label>Màu<input id="msds-series-color" type="color" value="#167d86"></label><label>Trục Y<select id="msds-series-axis" class="msds-select"><option value="y">Y trái</option><option value="y2">Y phải</option></select></label><label>Kiểu trace<select id="msds-series-mode" class="msds-select"><option value="lines">Line</option><option value="markers">Scatter</option><option value="lines+markers">Line–scatter</option><option value="sticks">Reference sticks (XRD)</option></select></label><label>Nét<select id="msds-series-dash" class="msds-select"><option value="solid">Liền</option><option value="dash">Đứt</option><option value="dot">Chấm</option></select></label><label>Marker<select id="msds-series-marker" class="msds-select"><option value="circle">Tròn</option><option value="square">Vuông</option><option value="diamond">Kim cương</option></select></label><label>Offset Y<input id="msds-series-offset" type="number" value="0" step="any"></label><label>Line width<input id="msds-line-width" type="number" value="1.6" min="0" step="0.1"></label><label>Marker size<input id="msds-marker-size" type="number" value="5" min="1" step="1"></label><label class="msds-check"><input id="msds-error-bars" type="checkbox"> Error bars</label></div>
+          <div class="msds-control-grid"><label>Panel title<input id="msds-panel-title" type="text"></label><label>X label<input id="msds-x-label" type="text" placeholder="X"></label><label>Y label<input id="msds-y-label" type="text" placeholder="Y"></label><label>Y2 label<input id="msds-y2-label" type="text" placeholder="Y2"></label><label>Tick format<select id="msds-tick-format" class="msds-select"><option value="auto">Tự động</option><option value="e">Scientific</option><option value=".3g">3 significant</option></select></label><label>Font size<input id="msds-font-size" type="number" value="12" min="7" max="30"></label><label>X scale<select id="msds-x-scale" class="msds-select"><option value="linear">Linear</option><option value="log">Log</option></select></label><label>Y scale<select id="msds-y-scale" class="msds-select"><option value="linear">Linear</option><option value="log">Log</option></select></label><label class="msds-check"><input id="msds-reverse-x" type="checkbox"> Đảo chiều X</label><label class="msds-check"><input id="msds-show-legend" type="checkbox" checked> Legend</label><label class="msds-check"><input id="msds-link-axes" type="checkbox"> Link axes</label></div>
+          <div class="msds-control-grid"><label>X min<input id="msds-xmin" type="number"></label><label>X max<input id="msds-xmax" type="number"></label><label>Y min<input id="msds-ymin" type="number"></label><label>Y max<input id="msds-ymax" type="number"></label></div>
+          <div class="msds-preview-row"><button id="msds-figure-update" class="msds-btn quiet">Cập nhật panel</button><button id="msds-remove-series" class="msds-btn quiet">Xóa series</button><button id="msds-add-annotation" class="msds-btn quiet">+ Annotation</button><button id="msds-add-reference" class="msds-btn quiet">+ Reference</button></div>
+        </div>
+        <div class="msds-card"><h3>Xuất figure</h3><div class="msds-control-grid"><label>Width (mm)<input id="msds-width-mm" type="number" min="20" value="180"></label><label>Height (mm)<input id="msds-height-mm" type="number" min="20" value="120"></label><label>PNG DPI<select id="msds-dpi" class="msds-select"><option value="300">300 dpi</option><option value="600">600 dpi</option></select></label></div><div class="msds-export-grid"><button data-msds-export="csv" class="msds-btn quiet">CSV</button><button data-msds-export="svg" class="msds-btn quiet">SVG</button><button data-msds-export="png" class="msds-btn quiet">PNG</button><button data-msds-export="pdf" class="msds-btn primary">PDF</button></div><p class="msds-hint">Export toàn bộ layout bằng full data; SVG/PDF giữ trace vector, nền trắng và kích thước publication.</p></div>
+      </section>
+      <section id="msds-tab-table" class="msds-tabpanel"><div class="msds-card"><h3>Worksheet & masking</h3><p class="msds-hint">Raw data bất biến. Chỉnh ô X/Y/error rồi tạo dataset dẫn xuất; mask loại điểm khỏi phép tính/plot.</p><div id="msds-table-summary" class="msds-muted">Chưa chọn dataset.</div><div class="msds-table-actions"><button id="msds-apply-edits" class="msds-btn primary" disabled>Tạo bản chỉnh sửa</button><button id="msds-mask-selected" class="msds-btn quiet" disabled>Mask điểm chọn</button><button id="msds-unmask-all" class="msds-btn quiet" disabled>Bỏ toàn bộ mask</button><button id="msds-export-data" class="msds-btn quiet" disabled>CSV dataset</button></div><div id="msds-data-table" class="msds-data-table"></div></div></section>
+    </aside>
+  </main>
+  <section class="msds-tutorial" data-msds-viewpanel="tutorial" hidden><div class="msds-tutorial-in"><p class="msds-kicker">QUY TRÌNH KHOA HỌC</p><h2>Từ phép đo tới kết luận có thể truy vết</h2><ol><li><b>Nhập</b> CSV/TXT/XLSX hoặc dán dữ liệu; xác nhận sheet, header và mapping cột.</li><li><b>Kiểm tra</b> invalid cells và mask điểm nghi ngờ — raw data luôn được giữ nguyên.</li><li><b>Preview</b> baseline, smoothing, derivative hay fit trước khi tạo bản dẫn xuất.</li><li><b>Phân tích</b> XRD, Tauc, peak fitting, peak ratio với ROI và tham số ghi lại trong project.</li><li><b>Xuất</b> figure publication-ready cùng CSV và project JSON để tái lập.</li></ol><button class="msds-btn primary" data-msds-view="workspace">Mở workspace</button></div></section>
+
+  <dialog id="msds-import-dialog" class="msds-dialog"><form method="dialog"><header><h2 id="msds-import-title">Nhập dữ liệu</h2><button value="cancel" class="msds-iconbtn">×</button></header><div id="msds-import-content"></div><footer><button value="cancel" class="msds-btn quiet">Hủy</button><button id="msds-import-confirm" value="default" class="msds-btn primary">Tạo dataset</button></footer></form></dialog>
+  <dialog id="msds-annotation-dialog" class="msds-dialog"><form method="dialog"><header><h2>Annotation / reference line</h2><button value="cancel" class="msds-iconbtn">×</button></header><div class="msds-control-grid"><label>Nội dung<input id="msds-annotation-text" type="text" placeholder="Peak (101)"></label><label>X<input id="msds-annotation-x" type="number"></label><label>Y<input id="msds-annotation-y" type="number"></label><label>Kiểu<select id="msds-annotation-type" class="msds-select"><option value="annotation">Annotation</option><option value="vline">Đường đứng</option><option value="hline">Đường ngang</option></select></label></div><footer><button value="cancel" class="msds-btn quiet">Hủy</button><button id="msds-annotation-confirm" value="default" class="msds-btn primary">Thêm</button></footer></form></dialog>
+</section>
+<!--__STUDIO_JS__-->
+</body>
+</html>

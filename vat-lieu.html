@@ -617,6 +617,7 @@ body.dragging *{cursor:grabbing !important}
     <a class="tab" href="index.html" style="text-decoration:none"><span class="tab-glyph">🧪</span> Phòng lab hóa học</a>
     <span class="tab" aria-selected="true" style="cursor:default"><span class="tab-glyph">◈</span> Xưởng vật liệu</span>
     <a class="tab" href="nguyen-tu.html" style="text-decoration:none"><span class="tab-glyph">⚛</span> Bảng tuần hoàn</a>
+    <a class="tab" href="analysis.html" style="text-decoration:none"><span class="tab-glyph">▥</span> Phân tích dữ liệu</a>
   </div>
 </nav>
 
@@ -918,7 +919,7 @@ body.dragging *{cursor:grabbing !important}
   </div>
 </footer>
 
-<script>window.__MSC_PAGE='fab';</script>
+<script>window.__MSC_PAGE='fab';window.__MSC_ARTIFACT=false;</script>
 <script>
 "use strict";
 /* PAGE quyết định trang này chạy phần nào. Bản gộp dùng "all";
@@ -4371,6 +4372,14 @@ function taucData(s){
   }
   return{pts,ymax,fit,nExp};
 }
+function uvvisData(s){
+  const x=[],y=[];
+  for(let lam=300;lam<=900;lam+=2){
+    const A=absorption(s,1239.84/lam)*s.thick*1e-7*0.9;
+    x.push(lam);y.push(100*Math.exp(-Math.min(9,A)));
+  }
+  return{x,y};
+}
 function drawUVVis(prog){
   const cv=$("#uvCv");if(!cv||!SMP)return;
   if(prog===undefined)prog=1;
@@ -4381,12 +4390,9 @@ function drawUVVis(prog){
     xlab:"Bước sóng λ (nm)",ylab:"Độ truyền qua T (%)",xticks:6,yticks:4});
   const lamNow=300+600*prog;
   const pts=[];
-  for(let lam=300;lam<=lamNow;lam+=2){
-    const hv=1239.84/lam;
-    const A=absorption(SMP,hv)*SMP.thick*1e-7*0.9;
-    const T=100*Math.exp(-Math.min(9,A));
-    pts.push([x0+(lam-300)/600*w,y0+h-T/105*h]);
-  }
+  const spectrum=uvvisData(SMP);
+  spectrum.x.forEach((lam,i)=>{if(lam<=lamNow)
+    pts.push([x0+(lam-300)/600*w,y0+h-spectrum.y[i]/105*h]);});
   if(pts.length>1)polyline(ctx,pts,"#A87BE0",2);
   const g=bandGap(SMP),lamEdge=1239.84/g.eff;
   if(lamEdge>300&&lamEdge<900&&lamEdge<=lamNow){
@@ -4478,6 +4484,60 @@ function drawIV(prog){
   if(meta)meta.innerHTML=prog<1
     ? `<span class="rec-dot"></span>Quét thế · V = <b>${vNow.toFixed(2)} V</b>`
     : `Quét xong −1 V → +1 V · đặc trưng tuyến tính, tiếp xúc ohmic`;
+}
+
+/* Chuyển dữ liệu số từ mô phỏng sang Data Studio, không đọc ngược ảnh canvas. */
+function studioDataset(kind){
+  if(!SMP)throw new Error("Hãy tạo mẫu trước khi xuất phổ.");
+  let data,xLabel,yLabel,xUnit,yUnit;
+  if(kind==="xrd"){
+    if(!xrdData)throw new Error("Hãy quét XRD trước khi xuất phổ.");
+    data={x:Array.from(xrdData.y,(_,i)=>xrdData.x0+i*xrdData.dx),y:Array.from(xrdData.y)};
+    [xLabel,yLabel,xUnit,yUnit]=["2θ","Intensity","°","a.u."];
+  }else if(kind==="tauc"){
+    const t=taucData(SMP);
+    data={x:t.pts.map(p=>p.hv),y:t.pts.map(p=>p.a)};
+    [xLabel,yLabel,xUnit,yUnit]=["Photon energy","Absorption coefficient","eV","cm⁻¹"];
+  }else{
+    data=uvvisData(SMP);
+    [xLabel,yLabel,xUnit,yUnit]=["Wavelength","Transmittance","nm","%"];
+  }
+  return{id:"sim-"+Date.now()+"-"+kind,revision:1,name:`${kind.toUpperCase()} · ${SMP.mat} · mô phỏng`,
+    ...data,error:null,mask:data.x.map(()=>false),xLabel,yLabel,xUnit,yUnit,parentId:null,operations:[],
+    source:{kind:"simulation",measurement:kind,sample:JSON.parse(JSON.stringify(SMP)),
+      thicknessNm:SMP.thick,transition:isDirect(SMP)?"direct":"indirect",
+      note:"Dữ liệu mô phỏng giảng dạy. Phổ truyền qua giữ nguyên mô hình hệ số 0,9 và mức bão hòa hiện có."}};
+}
+async function sendToStudio(kind){
+  let dataset;
+  try{dataset=studioDataset(kind);}catch(error){toast(error.message,"bad","!");return;}
+  if(location.protocol!=="file:"&&!window.__MSC_ARTIFACT){
+    try{
+      await new Promise((resolve,reject)=>{
+        const req=indexedDB.open("msc-data-studio",1);
+        const timer=setTimeout(()=>reject(new Error("Storage timeout")),3000);
+        req.onupgradeneeded=()=>{
+          const db=req.result;
+          ["projects","transfers"].forEach(name=>{if(!db.objectStoreNames.contains(name))db.createObjectStore(name,{keyPath:"id"});});
+        };
+        req.onerror=()=>{clearTimeout(timer);reject(req.error);};
+        req.onsuccess=()=>{
+          const db=req.result;
+          const tx=db.transaction("transfers","readwrite");
+          tx.objectStore("transfers").put({id:dataset.id,dataset});
+          tx.oncomplete=()=>{clearTimeout(timer);db.close();resolve();};
+          tx.onerror=()=>{clearTimeout(timer);db.close();reject(tx.error);};
+        };
+      });
+      const url=new URL(PAGE==="all"?"../analysis.html":"analysis.html",location.href);
+      url.searchParams.set("transfer",dataset.id);location.assign(url);return;
+    }catch(error){/* Trình duyệt từ chối storage: dùng project có thể tải xuống. */}
+  }
+  const project={schemaVersion:1,id:"project-"+dataset.id,name:dataset.name,datasets:[dataset],figures:[],results:[],operations:[],activeDatasetId:dataset.id};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(project)],{type:"application/json"}));
+  const a=document.createElement("a");a.href=url;a.download=kind+"-simulation.msc.json";a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+  toast("Đã xuất project. Mở Phân tích dữ liệu → Mở project để phân tích phổ.","ok","✓");
 }
 
 /* --- linh kiện --- */
@@ -5660,6 +5720,7 @@ const STATION_HTML={
     <div class="scan-meta" id="xrdScan"></div>
     <div class="readout" style="margin-top:12px;grid-template-columns:repeat(4,1fr)" id="xrdOut"></div>
     <button class="btn btn-ghost" id="xrdAgain" style="margin-top:14px">Quét lại</button>
+    <button class="btn btn-primary" id="xrdAnalyze" style="margin-top:14px">Phân tích phổ này</button>
     <div class="note">Vạch nhiễu xạ và cường độ tương đối tính trực tiếp từ vị trí nguyên tử trong ô mạng, nên các vạch bị cấm tự triệt tiêu. Hạt càng nhỏ, vạch càng tù theo phương trình Scherrer β = Kλ/(D·cosθ).</div>`,
 
   sem:()=>`
@@ -5677,6 +5738,8 @@ const STATION_HTML={
         <canvas id="taucCv" width="700" height="420"></canvas></div>
     </div>
     <div class="scan-meta" id="uvScan"></div>
+    <button class="btn btn-primary" id="uvAnalyze">Phân tích phổ truyền qua</button>
+    <button class="btn btn-ghost" id="taucAnalyze">Phân tích α(E) / Tauc</button>
     <div class="readout" style="margin-top:16px;grid-template-columns:repeat(3,1fr)" id="uvOut"></div>
     <div class="note">Đường nét đứt là phép ngoại suy vùng tuyến tính của đồ thị Tauc về trục hoành — đúng cách các nhóm nghiên cứu trích vùng cấm từ phổ đo được. Bờ hấp thụ bị đuôi Urbach làm nhòe, nên giá trị trích ra lệch khỏi Eg thật đúng như khi đo mẫu thật: mẫu càng nhiều sai hỏng, sai lệch càng lớn.</div>`,
 
@@ -5909,6 +5972,7 @@ const STATION_INIT={
     };
     scan();
     $("#xrdAgain").addEventListener("click",()=>{xrdData=null;scan();});
+    $("#xrdAnalyze").addEventListener("click",()=>sendToStudio("xrd"));
   },
   sem:()=>{
     const area=6/(SMP.D*1e-9*2.5e3)/1000;
@@ -5928,6 +5992,8 @@ const STATION_INIT={
     $("#semAgain").addEventListener("click",scan);
   },
   uvvis:()=>{
+    $("#uvAnalyze").addEventListener("click",()=>sendToStudio("uvvis"));
+    $("#taucAnalyze").addEventListener("click",()=>sendToStudio("tauc"));
     runAnim(2200,p=>{drawUVVis(p);drawTauc(p);},()=>{drawUVVis(1);drawTauc(1);});
     const g=bandGap(SMP),T=taucData(SMP),P=absProfile(SMP);
     const dev=T.fit?T.fit.Eg-g.eff:null;
