@@ -7,8 +7,9 @@
   <title>Materials Data Studio · UET MSC</title>
   <!--__STUDIO_CSS__-->
 </head>
-<body>
+<body class="msds-page">
 <a class="msds-skip" href="#msds-workspace">Bỏ qua điều hướng, tới workspace</a>
+<!--__STUDIO_EMBED_START__-->
 <section id="msc-data-studio" class="msds" aria-label="Materials Data Studio">
   <header class="msds-topbar">
     <div class="msds-brand"><span class="msds-mark">◈</span><span>Materials Data Studio</span><small>MSC · UET</small></div>
@@ -104,6 +105,7 @@
   <dialog id="msds-import-dialog" class="msds-dialog" aria-labelledby="msds-import-title"><form method="dialog"><header><h2 id="msds-import-title">Nhập dữ liệu</h2><button value="cancel" class="msds-iconbtn" aria-label="Đóng cửa sổ nhập dữ liệu">×</button></header><div id="msds-import-content"></div><footer><button value="cancel" class="msds-btn quiet">Hủy</button><button id="msds-import-confirm" value="default" class="msds-btn primary">Tạo dataset</button></footer></form></dialog>
   <dialog id="msds-annotation-dialog" class="msds-dialog" aria-labelledby="msds-annotation-title"><form method="dialog"><header><h2 id="msds-annotation-title">Annotation / reference line</h2><button value="cancel" class="msds-iconbtn" aria-label="Đóng cửa sổ annotation">×</button></header><div class="msds-control-grid"><label>Nội dung<input id="msds-annotation-text" type="text" placeholder="Peak (101)"></label><label>X<input id="msds-annotation-x" type="number"></label><label>Y<input id="msds-annotation-y" type="number"></label><label>Kiểu<select id="msds-annotation-type" class="msds-select"><option value="annotation">Annotation</option><option value="vline">Đường đứng</option><option value="hline">Đường ngang</option></select></label><label>Màu<input id="msds-annotation-color" type="color" value="#343846"></label><label>Font size<input id="msds-annotation-font-size" type="number" min="6" value="11"></label><label class="msds-check"><input id="msds-annotation-show-arrow" type="checkbox" checked> Show arrow</label><label>Reference dash<select id="msds-reference-dash" class="msds-select"><option>dot</option><option>solid</option><option>dash</option></select></label><label>Reference width<input id="msds-reference-width" type="number" min="0" step="0.1" value="1.3"></label><label>Reference label<input id="msds-reference-label" type="text"></label></div><footer><button value="cancel" class="msds-btn quiet">Hủy</button><button id="msds-annotation-confirm" value="default" class="msds-btn primary">Thêm</button></footer></form></dialog>
 </section>
+<!--__STUDIO_EMBED_END__-->
 <!--__STUDIO_JS__-->
 </body>
 </html>

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Dựng 3 trang riêng từ msc-lab.html (bản gộp)."""
+"""Dựng các entry web từ Lab Studio và Data Studio."""
 import io, os, re, sys, subprocess
 
 MASTER = "src/msc-lab.html"
@@ -18,10 +18,58 @@ OUT_DIR = "dist-artifact" if ARTIFACT else "."
 if ARTIFACT and not os.path.isdir(OUT_DIR):
     os.makedirs(OUT_DIR)
 
+# Bản web chính nhúng Data Studio thật vào cùng DOM với bốn panel Lab Studio.
+# analysis.html vẫn được giữ làm entry độc lập để không phá liên kết cũ.
+ANALYSIS_HEAD = ANALYSIS_PANEL = ANALYSIS_SCRIPT = ""
+
+def clean_embed(text):
+    """Giữ bundle hợp lệ nhưng không đưa trailing whitespace vào trang hợp nhất."""
+    # Không dùng splitlines(): bundle có thể chứa U+2028/U+2029 hợp lệ bên trong
+    # JavaScript string; Python coi chúng là ngắt dòng và sẽ làm hỏng literal.
+    return "\n".join(line.rstrip(" \t") for line in text.split("\n"))
+
+if not ARTIFACT:
+    npm = "npm.cmd" if os.name == "nt" else "npm"
+    subprocess.run([npm, "run", "build:analysis"], check=True)
+    analysis = io.open("analysis.html", encoding="utf-8").read()
+    marker_start = "<!--__STUDIO_EMBED_START__-->"
+    marker_end = "<!--__STUDIO_EMBED_END__-->"
+    if marker_start not in analysis or marker_end not in analysis:
+        raise RuntimeError("analysis.html thiếu marker để nhúng vào Lab Studio.")
+    style_start = analysis.index("<!-- NotoSans:")
+    style_end = analysis.index("</style>", style_start) + len("</style>")
+    ANALYSIS_HEAD = clean_embed(analysis[style_start:style_end])
+    fragment = clean_embed(analysis.split(marker_start, 1)[1].split(marker_end, 1)[0].strip())
+    fragment = fragment.replace('class="msds"', 'class="msds msds-embedded"', 1)
+    fragment = fragment.replace('<main id="msds-workspace"', '<div id="msds-workspace"', 1)
+    fragment = fragment.replace('</main>', '</div>', 1)
+    script_start = analysis.index("<script>", analysis.index(marker_end))
+    script_end = analysis.index("</script>", script_start) + len("</script>")
+    ANALYSIS_SCRIPT = clean_embed(analysis[script_start:script_end])
+    ANALYSIS_PANEL = (
+      '<section class="panel studio-panel" id="panel-studio" role="tabpanel" '
+      'aria-labelledby="tab-studio" hidden>\n%s\n</section>' % fragment
+    )
+
+ANALYSIS_EMBED_CSS = """<style>
+.studio-panel{max-width:none;padding:0}
+.studio-panel .msds-brand,.studio-panel .msds-nav a{display:none}
+.studio-panel .msds-topbar{height:58px;min-height:58px}
+.studio-panel .msds-shell{height:calc(100vh - 177px)!important;min-height:620px!important}
+body.studio-mode .hero,body.studio-mode .site-foot{display:none}
+body.studio-mode .toast-wrap{display:none}
+body.studio-mode .tabbar{top:59px}
+@media(max-width:1180px){
+  .studio-panel .msds-topbar{height:auto;min-height:0}
+  .studio-panel .msds-shell{height:calc(100vh - 229px)!important}
+}
+@media(max-width:900px){.studio-panel .msds-shell{height:auto!important;min-height:0!important}}
+</style>"""
+
 PAGES = {
  "lab": dict(
    file="index.html",
-   title="Phòng Lab Hóa Học MSC",
+   title="UET MSC Lab & Data Studio",
    eyebrow="Phòng thí nghiệm hóa học ảo · UET MSC",
    h1="Lắp dụng cụ, pha chế, đun nóng — như trong phòng thực hành",
    lead="Tủ dụng cụ 18 món và 26 hóa chất. Kéo ra bàn, lắp ghép, rót, đun, lọc, dẫn khí. "
@@ -58,8 +106,13 @@ PAGES = {
 }
 
 HREF = {"lab":"index.html","fab":"vat-lieu.html","atom":"nguyen-tu.html"}
-NAV = {"lab":("Phòng lab hóa học","🧪"),"fab":("Xưởng vật liệu","◈"),"atom":("Bảng tuần hoàn","⚛")}
+NAV = {
+  "lab":("Phòng lab hóa học","🧪"),"fab":("Xưởng vật liệu","◈"),
+  "mix":("Bàn tính toán","⚗"),"atom":("Bảng tuần hoàn","⚛"),
+  "studio":("Phân tích dữ liệu","▥"),
+}
 ORDER = ["lab","fab","atom"]
+UNIFIED_ORDER = ["fab","lab","mix","atom","studio"]
 
 def hero_html(cfg):
     b = []
@@ -80,6 +133,14 @@ def hero_html(cfg):
 
 def nav_html(page):
     rows = []
+    if page == "lab" and not ARTIFACT:
+        for p in UNIFIED_ORDER:
+            name, ico = NAV[p]
+            rows.append('    <button class="tab" role="tab" id="tab-%s" aria-controls="panel-%s" '
+                        'aria-selected="%s"><span class="tab-glyph">%s</span> %s</button>'
+                        % (p, p, str(p == "lab").lower(), ico, name))
+        return ('<nav class="tabbar">\n  <div class="tabbar-in" role="tablist" '
+                'aria-label="Không gian Lab và Data Studio">\n%s\n  </div>\n</nav>' % "\n".join(rows))
     for p in ORDER:
         name, ico = NAV[p]
         if p == page:
@@ -109,24 +170,29 @@ title_re= re.compile(r'<title>.*?</title>')
 built = []
 for page, cfg in PAGES.items():
     out = src
-    out = title_re.sub('<title>%s</title>' % cfg["title"], out, 1)
+    page_title = "Phòng Lab Hóa Học MSC" if page == "lab" and ARTIFACT else cfg["title"]
+    out = title_re.sub('<title>%s</title>' % page_title, out, 1)
     out = hero_re.sub(lambda m: hero_html(cfg), out, 1)
     out = nav_re.sub(lambda m: nav_html(page), out, 1)
     # đặt PAGE trước script chính
+    runtime_page = "all" if page == "lab" and not ARTIFACT else page
     out = out.replace('<script>\n"use strict";',
-                      '<script>window.__MSC_PAGE=%r;window.__MSC_ARTIFACT=%s;</script>\n<script>\n"use strict";' % (page, 'true' if ARTIFACT else 'false'), 1)
+                      '<script>window.__MSC_PAGE=%r;window.__MSC_ARTIFACT=%s;</script>\n<script>\n"use strict";' % (runtime_page, 'true' if ARTIFACT else 'false'), 1)
     # ẩn sẵn các panel không thuộc trang này
     for pid in ["fab","lab","mix","atom"]:
         keep = (pid == page) or (page == "lab" and pid == "mix")
         pat = re.compile(r'(<section class="panel wrap" id="panel-%s"[^>]*?)(\s+hidden)?>' % pid)
         rep = (lambda m: m.group(1) + ('>' if keep and pid == page else ' hidden>'))
         out = pat.sub(rep, out, 1)
+    if page == "lab" and not ARTIFACT:
+        out = out.replace('<span class="brand-name">Bàn Thí Nghiệm</span>',
+                          '<span class="brand-name">Lab &amp; Data Studio</span>', 1)
+        out = out.replace('<header class="site-head">', ANALYSIS_HEAD + "\n" + ANALYSIS_EMBED_CSS + '\n<header class="site-head">', 1)
+        out = out.replace('</main>', ANALYSIS_PANEL + '\n</main>', 1)
+        out += "\n" + ANALYSIS_SCRIPT + "\n"
     io.open(os.path.join(OUT_DIR, cfg["file"]), "w", encoding="utf-8").write(out)
-    built.append((cfg["file"], round(len(out)/1024), cfg["title"]))
+    built.append((cfg["file"], round(len(out)/1024), page_title))
 
 print(("Bản artifact -> " if ARTIFACT else "Bản web -> ") + OUT_DIR)
 for f,kb,t in built:
     print("%-22s %5d KB  %s" % (f,kb,t))
-if not ARTIFACT:
-    npm = "npm.cmd" if os.name == "nt" else "npm"
-    subprocess.run([npm, "run", "build:analysis"], check=True)

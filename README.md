@@ -1,22 +1,22 @@
 # Phòng thí nghiệm ảo & Materials Data Studio UET MSC
 
-Bộ ba phòng thí nghiệm mô phỏng chạy thẳng trên trình duyệt, làm cho
+Lab Studio và Materials Data Studio chạy trong cùng trang chính trên trình duyệt, làm cho
 [CLB Khoa học Vật liệu — Trường Đại học Công nghệ, ĐHQGHN](https://uetmsc.framer.website/).
 
 ### 👉 Dùng ngay: **https://nams1mple28.github.io/uet-msc-lab/**
 
 | Trang | Nội dung |
 |---|---|
-| [Phòng lab hóa học](https://nams1mple28.github.io/uet-msc-lab/) | Kéo dụng cụ ra bàn, pha chế, đun, lọc, dẫn khí |
-| [Xưởng vật liệu](https://nams1mple28.github.io/uet-msc-lab/vat-lieu.html) | Chế tạo mẫu qua 8 trạm rồi đo XRD, SEM, UV–Vis |
-| [Bảng tuần hoàn](https://nams1mple28.github.io/uet-msc-lab/nguyen-tu.html) | 118 nguyên tố, cấu hình electron, orbital 3D |
-| [Phân tích dữ liệu](https://nams1mple28.github.io/uet-msc-lab/analysis.html) | Worksheet, xử lý phổ, peak fitting, XRD, Raman/FTIR, UV–Vis/Tauc và figure publication-ready |
+| [Phòng lab hóa học](https://nams1mple28.github.io/uet-msc-lab/#lab) | Kéo dụng cụ ra bàn, pha chế, đun, lọc, dẫn khí |
+| [Xưởng vật liệu](https://nams1mple28.github.io/uet-msc-lab/#fab) | Chế tạo mẫu qua 8 trạm rồi đo XRD, SEM, UV–Vis |
+| [Bảng tuần hoàn](https://nams1mple28.github.io/uet-msc-lab/#atom) | 118 nguyên tố, cấu hình electron, orbital 3D |
+| [Phân tích dữ liệu](https://nams1mple28.github.io/uet-msc-lab/#studio) | Worksheet, xử lý phổ, peak fitting, XRD, Raman/FTIR, UV–Vis/Tauc và figure publication-ready |
 
 Không cần cài gì. Mở file HTML là chạy. Có chế độ nền sáng và nền tối.
 
 ## Materials Data Studio
 
-Trang `analysis.html` chạy hoàn toàn trong browser và không gửi dữ liệu đo lên server. Workflow:
+Data Studio nằm tại `index.html#studio`, chạy cùng DOM với Lab Studio và không gửi dữ liệu đo lên server. `analysis.html` vẫn là entry độc lập để giữ backward compatibility. Workflow:
 
 **CSV/TXT/DAT/XLSX hoặc paste → worksheet/mask → preprocessing → fitting → materials analysis → figure export.**
 
@@ -82,14 +82,14 @@ dự đoán.
 git clone <repo>
 cd uet-msc-lab
 npm ci                       # Node.js 22+, dependency đúng lockfile
-python3 build.py             # dựng 4 trang, gồm bundle Data Studio ngoại tuyến
+python3 build.py             # dựng trang hợp nhất và các entry tương thích
 python3 build.py --artifact  # dựng 3 phòng lab cho artifact claude.ai
 npm test                     # data model, import và numerical fixtures
 npm run test:browser         # Chromium + Firefox, worker/export/regression
 ```
 
-Chỉ sửa `src/msc-lab.html` cho ba phòng lab và các module trong `src/analysis/` cho Data Studio.
-Bốn file HTML ở thư mục gốc được sinh tự động và sẽ bị ghi đè khi build.
+Chỉ sửa `src/msc-lab.html` cho các phòng lab và các module trong `src/analysis/` cho Data Studio.
+`build.py` nhúng Data Studio vào `index.html`; bốn file HTML ở thư mục gốc đều được sinh tự động và sẽ bị ghi đè khi build.
 
 Xem [`AGENTS.md`](AGENTS.md) để biết kiến trúc, các mốc trong file nguồn và những ràng buộc về
 độ chính xác cần giữ.

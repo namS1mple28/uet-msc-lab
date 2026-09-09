@@ -23,7 +23,7 @@ Hai chế độ chỉ khác nhau ở **link chéo giữa ba trang**. Bản web d
 tuyệt đối vì mỗi artifact nằm ở một tên miền riêng, không có file anh em bên cạnh.
 Thư mục `dist-artifact/` không đưa vào git.
 
-Data Studio chưa có artifact URL: chế độ `--artifact` vẫn chỉ dựng ba phòng lab, không chèn link giả tới studio. Nút chuyển phổ sẽ xuất file project ở chế độ artifact/file trực tiếp.
+Data Studio chưa có artifact URL: chế độ `--artifact` vẫn chỉ dựng ba phòng lab, không chèn link giả tới studio. Bản web `index.html` nhúng Data Studio vào cùng DOM; `analysis.html` vẫn là entry độc lập để giữ link cũ. Nút chuyển phổ sẽ import trực tiếp khi đang ở trang hợp nhất, còn artifact hoặc entry không có studio sẽ dùng transfer/project fallback.
 
 ## Data Studio
 
@@ -40,8 +40,7 @@ Nếu sửa thẳng vào 3 file ở thư mục gốc, lần chạy `build.py` k�
 
 ## Kiến trúc
 
-`src/msc-lab.html` là một file HTML đơn, tự chứa mọi thứ (CSS + JS inline, không có dependency
-ngoài trừ Google Fonts). Nó chứa **cả bốn khu vực** của dự án:
+`src/msc-lab.html` là một file HTML đơn, tự chứa CSS và JS của Lab Studio. Nó chứa **bốn khu vực lab**; Data Studio được `build.py` nhúng từ bundle sinh bởi `src/analysis/` vào trang chính:
 
 | Panel HTML | Nội dung |
 |---|---|
@@ -50,18 +49,18 @@ ngoài trừ Google Fonts). Nó chứa **cả bốn khu vực** của dự án:
 | `#panel-mix` | Bàn tính toán: pha loãng, chuẩn độ, dung dịch đệm |
 | `#panel-atom` | Bảng tuần hoàn, cấu hình electron, orbital 3D |
 
-`build.py` sinh ra ba trang bằng cách:
+`build.py` sinh các entry bằng cách:
 
 1. Chèn `window.__MSC_PAGE = 'lab' | 'fab' | 'atom'` vào trước `<script>` chính
 2. Thay `<title>`, khối `<section class="hero">` và `<nav class="tabbar">`
 3. Thêm thuộc tính `hidden` cho các panel không thuộc trang đó
+4. Với bản web `index.html`, đặt `PAGE === "all"`, tạo tab `#studio` và nhúng Data Studio vào `#panel-studio`
 
 Trong JS, biến `PAGE` cùng ba cờ `hasChem` / `hasFab` / `hasAtom` quyết định phần nào được khởi
 tạo. Nhờ vậy trang hóa học **không hề dựng bảng tuần hoàn 118 nguyên tố** hay chạy vòng lặp vẽ
 của xưởng vật liệu — mỗi trang chỉ trả giá cho phần của nó.
 
-Bản gộp (`PAGE === "all"`, tức mở thẳng `src/msc-lab.html`) chạy cả bốn panel với thanh tab —
-tiện để thử nhanh khi phát triển.
+Bản gộp (`PAGE === "all"`) chạy cả bốn lab panels. Trong output web, Data Studio là panel thứ năm và bridge XRD/UV–Vis gọi `MSCStudio.importDataset()` để giữ nguyên trang và state.
 
 ## Các mốc trong file nguồn
 

@@ -1085,7 +1085,16 @@ export function initMaterialsDataStudio(root = document.getElementById('msc-data
   root.dataset.initialized = 'true';
   const studio = new Studio(root);
   studio.start();
-  globalThis.MSCStudio = { getProject: () => clone(studio.project), getActiveDataset: () => clone(studio.active), studio };
+  globalThis.MSCStudio = {
+    getProject: () => clone(studio.project),
+    getActiveDataset: () => clone(studio.active),
+    importDataset: (dataset) => {
+      studio.showView('workspace');
+      studio.addDataset(clone(dataset));
+      return clone(studio.active);
+    },
+    studio,
+  };
   return globalThis.MSCStudio;
 }
 

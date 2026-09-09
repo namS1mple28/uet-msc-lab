@@ -141,8 +141,7 @@
   --msds-radius-control:6px;
   --msds-shadow:0 16px 42px rgba(0,0,0,.28);
 }
-html,body{margin:0;min-height:100%;background:var(--msds-ground)}
-body{font-family:Figtree,NotoSans,Arial,sans-serif}
+body.msds-page{margin:0;min-height:100%;background:var(--msds-ground);font-family:Figtree,NotoSans,Arial,sans-serif}
 .msds{
   min-height:100vh;
   color:var(--msds-ink);
