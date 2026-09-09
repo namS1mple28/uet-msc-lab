@@ -7,16 +7,18 @@ const [worker, app]=await Promise.all([
   build({...options,entryPoints:['src/analysis/worker.js']}),
   build({...options,entryPoints:['src/analysis/main.js']}),
 ]);
-const [template,css,regular,bold,license]=await Promise.all([
+const [template,css,regular,bold,notoLicense,figtree,figtreeLicense]=await Promise.all([
   readFile('src/analysis/template.html','utf8'),readFile('src/analysis/style.css','utf8'),
   readFile('vendor/fonts/NotoSans-Regular.ttf'),readFile('vendor/fonts/NotoSans-Bold.ttf'),
-  readFile('vendor/fonts/OFL.txt','utf8')
+  readFile('vendor/fonts/OFL.txt','utf8'),readFile('vendor/fonts/Figtree-Variable.ttf'),
+  readFile('vendor/fonts/Figtree-OFL.txt','utf8')
 ]);
-const fonts=`@font-face{font-family:NotoSans;font-style:normal;font-weight:400;src:url(data:font/ttf;base64,${regular.toString('base64')}) format('truetype')}@font-face{font-family:NotoSans;font-style:normal;font-weight:700;src:url(data:font/ttf;base64,${bold.toString('base64')}) format('truetype')}`;
+const fonts=`@font-face{font-family:Figtree;font-style:normal;font-weight:300 900;font-display:swap;src:url(data:font/ttf;base64,${figtree.toString('base64')}) format('truetype')}@font-face{font-family:NotoSans;font-style:normal;font-weight:400;font-display:swap;src:url(data:font/ttf;base64,${regular.toString('base64')}) format('truetype')}@font-face{font-family:NotoSans;font-style:normal;font-weight:700;font-display:swap;src:url(data:font/ttf;base64,${bold.toString('base64')}) format('truetype')}`;
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c');
 const globals=`globalThis.__MSC_WORKER_SOURCE__=${json(worker.outputFiles[0].text)};globalThis.__MSC_PDF_FONT_REGULAR__=${json(regular.toString('base64'))};globalThis.__MSC_PDF_FONT_BOLD__=${json(bold.toString('base64'))};`;
 const js=(globals+app.outputFiles[0].text).replace(/<\/script/gi,'<\\/script');
 if(!template.includes('<!--__STUDIO_CSS__-->') || !template.includes('<!--__STUDIO_JS__-->'))throw new Error('Thiếu vị trí chèn bundle trong template.');
-const html=template.replace('<!--__STUDIO_CSS__-->',()=>`<!-- NotoSans: ${license.replace(/--/g,'—')} -->\n<style>${fonts}\n${css.replace('/*__FONT_CSS__*/','')}</style>`).replace('<!--__STUDIO_JS__-->',()=>`<script>${js}</script>`);
+const safeLicense=value=>value.replace(/--/g,'- -');
+const html=template.replace('<!--__STUDIO_CSS__-->',()=>`<!-- NotoSans: ${safeLicense(notoLicense)} -->\n<!-- Figtree: ${safeLicense(figtreeLicense)} -->\n<style>${fonts}\n${css.replace('/*__FONT_CSS__*/','')}</style>`).replace('<!--__STUDIO_JS__-->',()=>`<script>${js}</script>`);
 await writeFile('analysis.html',html);
 console.log(`Materials Data Studio: ${(Buffer.byteLength(html)/1024/1024).toFixed(2)} MiB, bundle ngoại tuyến.`);
