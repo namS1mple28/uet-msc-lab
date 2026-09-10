@@ -56,3 +56,47 @@ test('XRD bridge imports the displayed spectrum directly without page navigation
   expect(await page.evaluate(() => performance.getEntriesByType('navigation').length)).toBe(navigationCount);
   expect(errors).toEqual([]);
 });
+
+test('UV-Vis and Tauc bridges preserve units and sample metadata in the same page', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/index.html#fab');
+  const navigationCount = await page.evaluate(() => performance.getEntriesByType('navigation').length);
+
+  await page.evaluate(async () => {
+    SMP = newSample('ZnO', 'solgel');
+    await sendToStudio('uvvis');
+  });
+  const uvvis = await page.evaluate(() => window.MSCStudio.getActiveDataset());
+  expect(uvvis.source.measurement).toBe('uvvis');
+  expect(uvvis.xUnit).toBe('nm');
+  expect(uvvis.yUnit).toBe('%');
+  expect(uvvis.source.sample.mat).toBe('ZnO');
+
+  await page.evaluate(async () => {
+    showTab('fab');
+    await sendToStudio('tauc');
+  });
+  const tauc = await page.evaluate(() => window.MSCStudio.getActiveDataset());
+  expect(tauc.source.measurement).toBe('tauc');
+  expect(tauc.xUnit).toBe('eV');
+  expect(tauc.yUnit).toBe('cm⁻¹');
+  expect(tauc.source.transition).toBe('direct');
+  expect(tauc.source.thicknessNm).toBeGreaterThan(0);
+  expect(await page.evaluate(() => performance.getEntriesByType('navigation').length)).toBe(navigationCount);
+  expect(errors).toEqual([]);
+});
+
+test('legacy entries route every workspace back into the unified page', async ({ page }) => {
+  await page.goto('/analysis.html');
+  await expect(page.getByRole('link', { name: 'Phòng Lab' })).toHaveAttribute('href', 'index.html#lab');
+  await expect(page.getByRole('link', { name: 'Xưởng vật liệu' })).toHaveAttribute('href', 'index.html#fab');
+  await expect(page.getByRole('link', { name: 'Bảng tuần hoàn' })).toHaveAttribute('href', 'index.html#atom');
+
+  await page.goto('/vat-lieu.html');
+  await expect(page.getByRole('link', { name: 'Phân tích dữ liệu' })).toHaveAttribute('href', 'index.html#studio');
+  await page.getByRole('link', { name: 'Phân tích dữ liệu' }).click();
+  await expect(page).toHaveURL(/index\.html#studio$/);
+  await expect(page.locator('#panel-studio')).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Phân tích dữ liệu' })).toHaveAttribute('aria-selected', 'true');
+});

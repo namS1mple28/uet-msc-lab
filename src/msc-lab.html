@@ -133,6 +133,8 @@ button{font-family:inherit}
 /* layout */
 .bench{display:grid;grid-template-columns:minmax(0,352px) minmax(0,1fr);gap:20px;align-items:start}
 @media(max-width:940px){.bench{grid-template-columns:1fr}}
+.atom-bench{grid-template-columns:minmax(0,1fr) minmax(0,404px)}
+@media(max-width:940px){.atom-bench{grid-template-columns:1fr}}
 .stack{display:flex;flex-direction:column;gap:20px}
 .card{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg)}
 .card-pad{padding:20px}
@@ -306,6 +308,31 @@ body.dragging *{cursor:grabbing !important}
 .chip-btn[aria-pressed="true"]{background:var(--accent-dim);border-color:var(--accent);color:var(--text)}
 #cloud{cursor:grab;touch-action:none}
 #cloud.grabbing{cursor:grabbing}
+
+/* dấu vân tay orbital 2D — canvas giữ nền đen ở cả hai chủ đề */
+.fingerprint-head{align-items:flex-start}
+.fingerprint-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fingerprint-title h3{margin:0}
+.fingerprint-symbol{font-family:var(--mono);color:var(--accent-soft);font-size:16px}
+.fingerprint-badge{font-family:var(--mono);font-size:10px;letter-spacing:.035em;color:var(--muted-2);border:1px solid var(--hairline-2);border-radius:var(--r-pill);padding:4px 8px;white-space:nowrap}
+.fingerprint-meta{font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--muted-2);margin-top:5px}
+.fingerprint-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.fingerprint-controls button{min-height:34px;padding:6px 10px;border-radius:var(--r-pill);background:var(--surface-2);border:1px solid var(--hairline-2);color:var(--muted);font:500 11.5px var(--mono);cursor:pointer;transition:.16s;white-space:nowrap}
+.fingerprint-controls button:hover{color:var(--text);border-color:var(--accent-soft)}
+.fingerprint-controls button[aria-pressed="true"]{color:var(--text);background:var(--accent-dim);border-color:var(--accent)}
+#fingerprint{background:#030307;aspect-ratio:3/2;height:auto}
+.fingerprint-scale{display:flex;align-items:center;gap:8px;margin-top:12px;font:11px var(--mono);color:var(--muted-2);min-width:0}
+.fingerprint-scale b{font-weight:500;color:var(--text);white-space:nowrap}
+.fingerprint-bar{height:9px;flex:1;min-width:80px;border:1px solid var(--hairline-2);border-radius:var(--r-pill);background:#030307}
+.fingerprint-scale small{white-space:nowrap;color:var(--muted)}
+.fingerprint-caveat{margin-top:12px}
+@media(max-width:640px){
+  .fingerprint-head{gap:10px}
+  .fingerprint-controls{width:100%}
+  .fingerprint-controls button{min-height:44px;flex:1 1 76px;font-size:12px}
+  .fingerprint-scale{flex-wrap:wrap;gap:6px}
+  .fingerprint-bar{flex-basis:100%;order:3}
+}
 .hand{
   display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--r-md);
   background:var(--surface-2);border:1px dashed var(--hairline-2);font-size:12.5px;color:var(--muted-2);
@@ -448,24 +475,25 @@ body.dragging *{cursor:grabbing !important}
 .cab-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .tool{
   background:var(--surface-2);border:1px solid var(--hairline);border-radius:var(--r-md);
-  padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  min-height:70px;padding:9px 5px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
   cursor:grab;transition:.15s;text-align:center;
 }
 .tool:hover{border-color:var(--accent-soft);transform:translateY(-2px)}
 .tool[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 0 1px var(--accent)}
 .tool:active{cursor:grabbing}
-.tool svg{display:block}
-.tool span{font-size:10px;color:var(--muted);line-height:1.25}
+.tool svg{display:block;width:32px;height:auto}
+.tool span{font-size:11px;color:var(--muted);line-height:1.3}
 
 .bench-wrap{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg);overflow:hidden}
 .bench-bar{
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   padding:10px 14px;border-bottom:1px solid var(--hairline);
+  background:linear-gradient(180deg,var(--surface),var(--surface-2));
 }
 .bench-bar .sp{flex:1}
 .mini{
   padding:6px 12px;border-radius:var(--r-pill);background:transparent;
-  border:1px solid var(--hairline-2);color:var(--muted);font-size:12px;cursor:pointer;transition:.15s;
+  min-height:36px;border:1px solid var(--hairline-2);color:var(--muted);font-size:12px;cursor:pointer;transition:.15s;
 }
 .mini:hover:not(:disabled){color:var(--text);border-color:var(--accent)}
 .mini[aria-pressed="true"]{background:var(--accent-dim);border-color:var(--accent);color:var(--text)}
@@ -473,6 +501,24 @@ body.dragging *{cursor:grabbing !important}
 .mini.danger:hover{border-color:var(--acid);color:var(--acid)}
 #benchCv{display:block;width:100%;height:auto;cursor:default;touch-action:none;
   background:linear-gradient(180deg,var(--bench-a) 0%,var(--bench-b) 62%,var(--bench-c) 100%)}
+
+.dose-control{
+  min-height:36px;display:inline-flex;align-items:center;gap:7px;padding:4px 5px 4px 11px;
+  border:1px solid var(--hairline-2);border-radius:var(--r-pill);color:var(--muted-2);
+  font-size:11.5px;white-space:nowrap;background:var(--surface);
+}
+.dose-control select{
+  min-height:26px;padding:2px 24px 2px 8px;border:0;border-left:1px solid var(--hairline);
+  background:var(--surface);color:var(--text);font:500 11.5px var(--mono);cursor:pointer;
+}
+.bench-state{
+  display:inline-flex;align-items:center;gap:7px;margin-left:auto;padding:4px 9px;
+  border:1px solid var(--hairline);border-radius:var(--r-pill);color:var(--muted);
+  background:var(--surface-2);font-size:11.5px;line-height:1.4;
+}
+.bench-state::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted-2)}
+.bench-state.active{border-color:var(--accent-line);color:var(--text);background:var(--accent-dim)}
+.bench-state.active::before{background:var(--accent-soft)}
 
 .vlab-side{display:flex;flex-direction:column;gap:14px}
 .insp{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg)}
@@ -490,13 +536,39 @@ body.dragging *{cursor:grabbing !important}
 .insp-empty{padding:26px 16px;text-align:center;font-size:12.5px;color:var(--muted-2);line-height:1.6}
 
 .hint-bar{
-  display:flex;align-items:center;gap:9px;padding:9px 14px;
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 14px;
   border-top:1px solid var(--hairline);font-size:12px;color:var(--muted-2);
 }
 .hint-bar b{color:var(--accent-soft);font-weight:500}
+.touch-actions{
+  display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;
+  border-top:1px solid var(--hairline);background:var(--surface-2);
+}
+.touch-actions[hidden]{display:none!important}
+.touch-summary{flex:1 1 100%;font-size:12px;color:var(--muted);line-height:1.4}
+.touch-summary b{color:var(--text);font-weight:600}
+.touch-action{
+  min-height:44px;flex:1 1 116px;border:1px solid var(--hairline-2);
+  border-radius:var(--r-md);background:var(--surface);color:var(--text);
+  padding:9px 12px;font-size:12.5px;font-weight:550;cursor:pointer;
+}
+.touch-action.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.touch-action.danger{color:var(--acid)}
 .ghost-tool{
   position:fixed;z-index:200;pointer-events:none;opacity:.92;
   transform:translate(-50%,-50%);filter:drop-shadow(0 10px 22px var(--drop));
+}
+@media(max-width:760px){
+  .bench-bar{gap:7px;padding:9px;max-height:164px;overflow-y:auto}
+  .bench-bar .mini,.dose-control{min-height:44px}
+  .dose-control select{min-height:34px;font-size:12px}
+  .bench-state{width:100%;justify-content:center;margin-left:0;border-radius:var(--r-md);min-height:40px}
+  .hint-bar{line-height:1.55}
+  .touch-actions{display:flex;position:sticky;bottom:0;z-index:7;box-shadow:0 -10px 28px var(--drop)}
+  .cab{position:static}
+  .cab-body{max-height:440px}
+  .tool{min-height:78px}
+  .tool span{font-size:12px}
 }
 
 
@@ -696,6 +768,13 @@ body.dragging *{cursor:grabbing !important}
       <div class="bench-bar">
         <button class="mini" id="mHeat">Bật đèn cồn</button>
         <button class="mini" id="mDrip">Nhỏ 0,5 mL từ buret</button>
+        <label class="dose-control" for="mDose">Lượng rót
+          <select id="mDose" aria-label="Thể tích mỗi lần rót">
+            <option value="0.5">0,5 mL</option><option value="1">1 mL</option>
+            <option value="5">5 mL</option><option value="10" selected>10 mL</option>
+            <option value="20">20 mL</option>
+          </select>
+        </label>
         <button class="mini" id="mStir">Khuấy</button>
         <button class="mini" id="mTare">Trừ bì cân</button>
         <button class="mini" id="mEmpty">Đổ bỏ</button>
@@ -711,8 +790,10 @@ body.dragging *{cursor:grabbing !important}
       </div>
       <canvas id="benchCv" width="1760" height="1040" aria-label="Bàn thí nghiệm ảo"></canvas>
       <div class="hint-bar" id="benchHint">
-        <b>Kéo</b> dụng cụ ra bàn · <b>lọ hóa chất</b> thả vào bình để rót · <b>bình lên bình</b> để trút · <b>bình lên phễu</b> để lọc · <b>ống dẫn khí</b> thả giữa hai bình để nối
+        <span><b>Kéo</b> dụng cụ ra bàn · <b>lọ hóa chất</b> thả vào bình để rót · <b>bình lên bình</b> để trút · <b>bình lên phễu</b> để lọc · <b>ống dẫn khí</b> thả giữa hai bình để nối</span>
+        <span class="bench-state" id="benchState" role="status" aria-live="polite">Không cầm hóa chất</span>
       </div>
+      <div class="touch-actions" id="touchActions" aria-label="Thao tác nhanh với dụng cụ đã chọn" hidden></div>
     </div>
 
     <!-- bảng thông tin -->
@@ -843,7 +924,7 @@ body.dragging *{cursor:grabbing !important}
     <div class="legend" id="ptLegend"></div>
   </div>
 
-  <div class="bench" style="grid-template-columns:minmax(0,1fr) minmax(0,404px)">
+  <div class="bench atom-bench">
     <div class="stack">
       <div class="card card-pad">
         <div class="el-hero">
@@ -862,6 +943,35 @@ body.dragging *{cursor:grabbing !important}
         <p class="sub-head" style="margin-top:22px">Sơ đồ ô orbital · Hund &amp; Pauli</p>
         <div class="orb-row" id="orbRow"></div>
         <div class="note">Mỗi ô là một orbital chứa tối đa 2 electron ngược spin (Pauli). Trong cùng phân lớp, electron chiếm đơn lẻ hết các ô rồi mới ghép đôi (Hund).</div>
+      </div>
+
+      <div class="card" aria-labelledby="fingerprintTitle">
+        <div class="card-head fingerprint-head">
+          <div>
+            <div class="fingerprint-title">
+              <span class="fingerprint-symbol" id="fingerprintSymbol">Si · Silicon</span>
+              <h3 id="fingerprintTitle">Dấu vân tay orbital 2D</h3>
+              <span class="fingerprint-badge">Orbital Hydrogenic · đại diện hình dạng</span>
+            </div>
+            <p class="fingerprint-meta" id="fingerprintMeta"></p>
+          </div>
+          <div class="fingerprint-controls" aria-label="Điều khiển dấu vân tay orbital">
+            <button type="button" data-fingerprint-plane="xz" aria-pressed="true" aria-label="Mặt cắt xz">xz</button>
+            <button type="button" data-fingerprint-plane="xy" aria-pressed="false" aria-label="Mặt cắt xy">xy</button>
+            <button type="button" data-fingerprint-plane="yz" aria-pressed="false" aria-label="Mặt cắt yz">yz</button>
+            <button type="button" data-fingerprint-mode="density" aria-pressed="true">Mật độ |ψ|²</button>
+            <button type="button" data-fingerprint-mode="phase" aria-pressed="false">Pha ψ</button>
+          </div>
+        </div>
+        <div class="card-pad">
+          <canvas id="fingerprint" width="720" height="480" role="img" aria-label="Mặt cắt hai chiều của orbital hydrogenic đại diện"></canvas>
+          <div class="fingerprint-scale" id="fingerprintScale" aria-label="Thang màu dấu vân tay orbital">
+            <b id="fingerprintScaleLabel">|ψ|² · log1p, chuẩn hóa theo lát cắt</b>
+            <span class="fingerprint-bar" id="fingerprintBar" aria-hidden="true"></span>
+            <small id="fingerprintScaleMin">thấp</small><small id="fingerprintScaleMax">cao</small>
+          </div>
+          <div class="note fingerprint-caveat" id="fingerprintCaveat" hidden></div>
+        </div>
       </div>
 
       <div class="card">
@@ -954,13 +1064,26 @@ const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)").matches;
 var THEME="dark";
 const PAL={
   dark :{fg:[255,255,255],sh:[0,0,0],shk:1,   mut:"#6C6675",mut2:"#A9A3B2",
-         panel:"#0C0B0E",grid:.055,gridX:.035},
+         panel:"#0C0B0E",grid:.055,gridX:.035,
+         glass:[211,225,247],glassEdge:[171,192,224],metal:[136,148,166],metalHi:[220,229,242],
+         wood:[128,94,67],woodEdge:[201,164,119],heat:[255,175,75],heatCore:[255,238,188],
+         vapour:[214,224,243],selection:[177,132,241],reactionSuccess:[71,205,143],
+         reactionWarning:[235,169,70],reactionGas:[93,167,249],instrument:[57,196,173],
+         orbBg:[3,3,7],orbViolet:[94,57,190],orbMagenta:[210,53,184],orbRed:[240,63,78],
+         orbOrange:[255,143,57],orbWhite:[255,246,233],orbPhaseNeg:[111,54,191],orbAxis:[205,194,226]},
   light:{fg:[28,22,40],   sh:[64,48,104],shk:.42,mut:"#8A8298",mut2:"#5B5369",
-         panel:"#FFFFFF",grid:.085,gridX:.055}
+         panel:"#FFFFFF",grid:.085,gridX:.055,
+         glass:[72,94,132],glassEdge:[47,67,105],metal:[83,94,112],metalHi:[41,53,72],
+         wood:[112,78,52],woodEdge:[87,57,36],heat:[188,99,25],heatCore:[147,75,18],
+         vapour:[96,112,145],selection:[112,68,185],reactionSuccess:[29,135,86],
+         reactionWarning:[174,101,21],reactionGas:[38,104,203],instrument:[19,127,112],
+         orbBg:[3,3,7],orbViolet:[94,57,190],orbMagenta:[210,53,184],orbRed:[240,63,78],
+         orbOrange:[255,143,57],orbWhite:[255,246,233],orbPhaseNeg:[111,54,191],orbAxis:[205,194,226]}
 };
 const P_=()=>PAL[THEME];
 function fg(a){const c=P_().fg;return`rgba(${c[0]},${c[1]},${c[2]},${a})`;}
 function sh(a){const c=P_().sh;return`rgba(${c[0]},${c[1]},${c[2]},${a*P_().shk})`;}
+function pal(name,a){const c=P_()[name];return`rgba(${c[0]},${c[1]},${c[2]},${a===undefined?1:a})`;}
 const MUT=()=>P_().mut, MUT2=()=>P_().mut2, PANEL=()=>P_().panel;
 const isLight=()=>THEME==="light";
 
@@ -1610,6 +1733,136 @@ function angular(l,theta){             // phần góc cho m = 0
 }
 
 /* ============================================================
+   DẤU VÂN TAY ORBITAL 2D
+   Đây là lát cắt xác định của orbital hydrogenic m = 0. Nó chọn
+   phân lớp có electron tăng khi đi từ Z−1 sang Z, không phải mật độ
+   điện tử tổng của nguyên tử nhiều electron.
+   ============================================================ */
+function differentiatingSubshell(z){
+  const now=configOf(z),before=z>1?configOf(z-1):[];
+  const count=list=>Object.fromEntries(list.map(x=>[x.orb,x.e]));
+  const a=count(now),b=count(before);
+  const choices=ORDER.map((orb,index)=>({orb,index,delta:(a[orb]||0)-(b[orb]||0)}))
+    .filter(x=>x.delta>0)
+    .sort((x,y)=>y.index-x.index);
+  const chosen=choices[0]||{orb:"1s",delta:1};
+  return{...chosen,n:+chosen.orb[0],l:LOF[chosen.orb[1]]};
+}
+function orbitalFingerprintSpec(z){
+  const sub=differentiatingSubshell(z),element=ELEMENTS[z-1];
+  const occupancy=(configOf(z).find(x=>x.orb===sub.orb)||{}).e||0;
+  const capacity=CAP[sub.orb[1]],component=["s","p_z","d_z²","f_z³"][sub.l]||"s";
+  const subshell={label:`${sub.orb}${sup(occupancy)}`,orb:sub.orb,n:sub.n,l:sub.l,occupancy,capacity,delta:sub.delta};
+  return{z,symbol:element.sym,name:element.name,n:sub.n,l:sub.l,orb:sub.orb,delta:sub.delta,component,m:0,
+    subshell,model:{family:"hydrogenic",component,m:0},
+    coordinates:{system:"Cartesian",representative:"m = 0",planes:["xz","xy","yz"]},
+    display:{density:"|ψ|²",phase:"ψ",normalization:"per-view log1p"}};
+}
+function hydrogenicPsiAt(n,l,x,y,z){
+  const r=Math.hypot(x,y,z);
+  if(r===0)return l===0?Rnl(n,l,0):0;
+  const cosTheta=Math.max(-1,Math.min(1,z/r));
+  return Rnl(n,l,r)*angular(l,Math.acos(cosTheta));
+}
+
+const FPCV=$("#fingerprint"),FPCTX=FPCV.getContext("2d");
+const fingerprintFieldCache=new Map();
+let fingerprintPlane="xz",fingerprintMode="density",fingerprintSpec=null;
+function fingerprintCoordinates(plane,u,v){
+  if(plane==="xy")return[u,v,0];
+  if(plane==="yz")return[0,u,v];
+  return[u,0,v];
+}
+function sampleFingerprintField(n,l,plane,mode){
+  const key=`${n}|${l}|${plane}|${mode}`;
+  if(fingerprintFieldCache.has(key))return fingerprintFieldCache.get(key);
+  const w=360,h=240,values=new Float32Array(w*h);
+  const extent=n*n*1.55+2.5;
+  let max=0;
+  for(let iy=0;iy<h;iy++){
+    const v=(iy/(h-1)*2-1)*extent;
+    for(let ix=0;ix<w;ix++){
+      const u=(ix/(w-1)*2-1)*extent;
+      const [x,y,z]=fingerprintCoordinates(plane,u,v);
+      const psi=hydrogenicPsiAt(n,l,x,y,z);
+      const value=mode==="density"?psi*psi:psi;
+      values[iy*w+ix]=value;
+      max=Math.max(max,Math.abs(value));
+    }
+  }
+  const field={w,h,values,max:max||1,extent,plane,mode};
+  fingerprintFieldCache.set(key,field);
+  return field;
+}
+function mixRgb(a,b,t){return a.map((v,i)=>Math.round(v+(b[i]-v)*t));}
+function fingerprintColor(mode,value){
+  const p=P_(),t=Math.max(0,Math.min(1,Math.abs(value)));
+  if(mode==="phase"){
+    if(t<1e-6)return p.orbBg.slice();
+    const stops=value<0?[p.orbBg,p.orbPhaseNeg,p.orbMagenta]:[p.orbBg,p.orbOrange,p.orbWhite];
+    const scaled=t*(stops.length-1),i=Math.min(stops.length-2,Math.floor(scaled));
+    return mixRgb(stops[i],stops[i+1],scaled-i);
+  }
+  const stops=[p.orbBg,p.orbViolet,p.orbMagenta,p.orbRed,p.orbOrange,p.orbWhite];
+  const scaled=t*(stops.length-1),i=Math.min(stops.length-2,Math.floor(scaled));
+  return mixRgb(stops[i],stops[i+1],scaled-i);
+}
+function fingerprintGradient(mode){
+  if(mode==="phase")return`linear-gradient(90deg,${pal("orbMagenta")},${pal("orbPhaseNeg")},${pal("orbBg")},${pal("orbOrange")},${pal("orbWhite")})`;
+  return`linear-gradient(90deg,${pal("orbBg")},${pal("orbViolet")},${pal("orbMagenta")},${pal("orbRed")},${pal("orbOrange")},${pal("orbWhite")})`;
+}
+function renderOrbitalFingerprint(){
+  if(!fingerprintSpec)return;
+  const field=sampleFingerprintField(fingerprintSpec.n,fingerprintSpec.l,fingerprintPlane,fingerprintMode);
+  const W=FPCV.width,H=FPCV.height,img=FPCTX.createImageData(W,H),data=img.data;
+  const logMax=Math.log1p(field.max);
+  for(let y=0;y<H;y++){
+    const iy=Math.min(field.h-1,Math.floor(y/H*field.h));
+    for(let x=0;x<W;x++){
+      const ix=Math.min(field.w-1,Math.floor(x/W*field.w));
+      const raw=field.values[iy*field.w+ix];
+      const mapped=Math.log1p(Math.abs(raw))/logMax;
+      const rgb=fingerprintColor(fingerprintMode,fingerprintMode==="phase"?(raw<0?-mapped:mapped):mapped);
+      const o=(y*W+x)*4;data[o]=rgb[0];data[o+1]=rgb[1];data[o+2]=rgb[2];data[o+3]=255;
+    }
+  }
+  FPCTX.fillStyle=pal("orbBg");FPCTX.fillRect(0,0,W,H);FPCTX.putImageData(img,0,0);
+  FPCTX.save();
+  FPCTX.strokeStyle=pal("orbAxis",.26);FPCTX.lineWidth=1;
+  FPCTX.beginPath();FPCTX.moveTo(W/2,0);FPCTX.lineTo(W/2,H);FPCTX.moveTo(0,H/2);FPCTX.lineTo(W,H/2);FPCTX.stroke();
+  const labels=fingerprintPlane==="xy"?["x","y"]:fingerprintPlane==="yz"?["y","z"]:["x","z"];
+  FPCTX.fillStyle=pal("orbAxis",.76);FPCTX.font="500 13px 'JetBrains Mono', monospace";
+  FPCTX.fillText(labels[0],W-17,H/2-7);FPCTX.fillText(labels[1],W/2+7,16);
+  FPCTX.restore();
+}
+function updateOrbitalFingerprint(z){
+  fingerprintSpec=orbitalFingerprintSpec(z);
+  const s=fingerprintSpec;
+  $("#fingerprintSymbol").textContent=`${s.symbol} · ${s.name}`;
+  $("#fingerprintMeta").textContent=`Nguyên tố ${s.symbol} (${s.name}) · phân lớp phân biệt ${s.subshell.label} (+${s.delta}e) → ${s.component} đại diện · (n, ℓ, m) = (${s.n}, ${s.l}, ${s.m})`;
+  const caveat=$("#fingerprintCaveat");
+  caveat.hidden=z<=1;
+  caveat.textContent="Z > 1: topology Hydrogenic chỉ là đại diện hình dạng của phân lớp phân biệt; không phải many-electron wavefunction hoặc total electron density của nguyên tử.";
+  $("#fingerprintBar").style.background=fingerprintGradient(fingerprintMode);
+  const isPhase=fingerprintMode==="phase";
+  $("#fingerprintScaleLabel").textContent=isPhase?"Pha ψ · log1p, chuẩn hóa theo lát cắt":"|ψ|² · log1p, chuẩn hóa theo lát cắt";
+  $("#fingerprintScaleMin").textContent=isPhase?"−ψ":"0";
+  $("#fingerprintScaleMax").textContent=isPhase?"+ψ":"cao";
+  FPCV.setAttribute("aria-label",`${s.component} hydrogenic representative, mặt cắt ${fingerprintPlane}, ${isPhase?"pha ψ":"mật độ |ψ|²"}`);
+  renderOrbitalFingerprint();
+}
+document.querySelectorAll("[data-fingerprint-plane]").forEach(button=>button.addEventListener("click",()=>{
+  fingerprintPlane=button.dataset.fingerprintPlane;
+  document.querySelectorAll("[data-fingerprint-plane]").forEach(b=>b.setAttribute("aria-pressed",String(b===button)));
+  updateOrbitalFingerprint(currentZ);
+}));
+document.querySelectorAll("[data-fingerprint-mode]").forEach(button=>button.addEventListener("click",()=>{
+  fingerprintMode=button.dataset.fingerprintMode;
+  document.querySelectorAll("[data-fingerprint-mode]").forEach(b=>b.setAttribute("aria-pressed",String(b===button)));
+  updateOrbitalFingerprint(currentZ);
+}));
+
+/* ============================================================
    ĐÁM MÂY ORBITAL 3D
    Lấy mẫu |ψ|² thật: bán kính theo CDF của r²R(r)², hướng theo
    rejection trên mặt cầu với hàm điều hòa cầu dạng thực.
@@ -1789,7 +2042,7 @@ function loadOrbital(n,l,m,label){
   CLOUD=sampleOrbital(n,l,m,16000);
   const radialNodes=n-l-1,angularNodes=l;
   $("#orbTitle").textContent=`Orbital ${label}`;
-  $("#orbSub").textContent=`n = ${n}, ℓ = ${l} → ${radialNodes} nút cầu và ${angularNodes} nút phẳng · ${CLOUD.count.toLocaleString("vi-VN")} hạt lấy mẫu theo |ψ|²`;
+  $("#orbSub").textContent=`n = ${n}, ℓ = ${l} → ${radialNodes} nút cầu và ${angularNodes} mặt nút góc · ${CLOUD.count.toLocaleString("vi-VN")} hạt lấy mẫu theo |ψ|²`;
   const sel=$("#orbPick"),want=`${n}|${l}|${m}`;
   if(sel.value!==want)sel.value=want;
 }
@@ -2011,6 +2264,7 @@ function selectElement(z){
     : `${val} electron lớp ngoài cùng quyết định hóa trị và kiểu liên kết của ${e.name}.`;
 
   shellData=shells;symbol=e.sym;
+  updateOrbitalFingerprint(z);
   drawCloud(z);
   drawLevels(z);
   drawTrend("trendEn","trendEnWrap","trendEnTip","en","","Độ âm điện (Pauling)",v=>v.toFixed(1));
@@ -2037,6 +2291,12 @@ const ION={
   C2O4:{s:"C₂O₄²⁻",M:88.019},
   I2:{s:"I₂ tan",M:253.809,c:[164,96,32]},
   Tinhbot:{s:"hồ tinh bột",M:162.14}
+};
+/* Điện tích dùng cho charge-balance khi giải pH của hỗn hợp acid/base yếu. */
+const ION_CHARGE={
+  H:1,OH:-1,Na:1,K:1,NH4:1,Ca:2,Ba:2,Mg:2,Zn:2,Cu:2,Fe3:3,Co:2,Ni:2,
+  Ag:1,Pb:2,Cl:-1,NO3:-1,SO4:-2,CO3:-2,I:-1,Br:-1,Ac:-1,MnO4:-1,Al:3,
+  Fe2:2,Mn2:2,SCN:-1,C2O4:-2,I2:0,Tinhbot:0
 };
 /* Chất rắn cho vào bình — không làm tăng thể tích, tan hoặc phản ứng với axit */
 const SOLIDS={
@@ -2083,28 +2343,35 @@ const REAGENTS=[
   {id:"methyl",f:"MO",n:"Metyl da cam",c:0,ind:"methyl"}
 ];
 
-/* bảng tính tan: [cation, anion, hệ số cation, hệ số anion, công thức, màu, tên màu] */
+/*
+   Bảng cân bằng tan: [cation, anion, hệ số cation, hệ số anion, công thức,
+   màu, tên màu, M pha rắn (g/mol), Ksp ở 25 °C].
+   Các Ksp là giá trị xấp xỉ cho dung dịch loãng lý tưởng (activity ≈
+   concentration/1 M); không thay thế cho activity coefficients ở ionic
+   strength cao, complexation hoặc pH-dependent hydrolysis.
+*/
 const PRECIP=[
-  ["Ag","Cl",1,1,"AgCl","#E9E9E9","trắng"],
-  ["Ag","Br",1,1,"AgBr","#F0E4B8","vàng nhạt"],
-  ["Ag","I",1,1,"AgI","#E9D24E","vàng"],
-  ["Ag","CO3",2,1,"Ag₂CO₃","#EFE8C8","vàng nhạt"],
-  ["Ag","OH",2,2,"Ag₂O","#4A3B2E","nâu đen"],
-  ["Pb","I",1,2,"PbI₂","#F3C62E","vàng tươi"],
-  ["Pb","Cl",1,2,"PbCl₂","#F0F0F0","trắng"],
-  ["Pb","SO4",1,1,"PbSO₄","#F0F0F0","trắng"],
-  ["Pb","CO3",1,1,"PbCO₃","#F2F2F2","trắng"],
-  ["Pb","OH",1,2,"Pb(OH)₂","#F2F2F2","trắng"],
-  ["Ba","SO4",1,1,"BaSO₄","#F4F4F4","trắng"],
-  ["Ba","CO3",1,1,"BaCO₃","#F4F4F4","trắng"],
-  ["Ca","CO3",1,1,"CaCO₃","#F6F6F6","trắng"],
-  ["Cu","OH",1,2,"Cu(OH)₂","#37A8DC","xanh lam"],
-  ["Fe3","OH",1,3,"Fe(OH)₃","#8E3A1C","nâu đỏ"],
-  ["Ni","OH",1,2,"Ni(OH)₂","#4CAF6B","xanh lục"],
-  ["Co","OH",1,2,"Co(OH)₂","#E0729B","hồng"],
-  ["Mg","OH",1,2,"Mg(OH)₂","#F2F2F2","trắng"],
-  ["Zn","OH",1,2,"Zn(OH)₂","#F2F2F2","trắng"],
-  ["Cu","CO3",1,1,"CuCO₃","#5FBFC9","lam nhạt"]
+  ["Ag","Cl",1,1,"AgCl","#E9E9E9","trắng",143.318,1.8e-10],
+  ["Ag","Br",1,1,"AgBr","#F0E4B8","vàng nhạt",187.772,5.0e-13],
+  ["Ag","I",1,1,"AgI","#E9D24E","vàng",234.772,8.3e-17],
+  ["Ag","CO3",2,1,"Ag₂CO₃","#EFE8C8","vàng nhạt",275.744,8.5e-12],
+  /* Với Ag₂O + H₂O ⇌ 2Ag⁺ + 2OH⁻, Ksp ≈ 3,8×10⁻¹⁶ (stoich 2:2). */
+  ["Ag","OH",2,2,"Ag₂O","#4A3B2E","nâu đen",231.735,3.8e-16],
+  ["Pb","I",1,2,"PbI₂","#F3C62E","vàng tươi",461.008,8.7e-9],
+  ["Pb","Cl",1,2,"PbCl₂","#F0F0F0","trắng",278.100,1.7e-5],
+  ["Pb","SO4",1,1,"PbSO₄","#F0F0F0","trắng",303.260,1.8e-8],
+  ["Pb","CO3",1,1,"PbCO₃","#F2F2F2","trắng",267.208,7.4e-14],
+  ["Pb","OH",1,2,"Pb(OH)₂","#F2F2F2","trắng",241.214,2.8e-16],
+  ["Ba","SO4",1,1,"BaSO₄","#F4F4F4","trắng",233.390,1.1e-10],
+  ["Ba","CO3",1,1,"BaCO₃","#F4F4F4","trắng",197.338,2.6e-9],
+  ["Ca","CO3",1,1,"CaCO₃","#F6F6F6","trắng",100.086,3.8e-9],
+  ["Cu","OH",1,2,"Cu(OH)₂","#37A8DC","xanh lam",97.560,1.6e-19],
+  ["Fe3","OH",1,3,"Fe(OH)₃","#8E3A1C","nâu đỏ",106.866,6.3e-38],
+  ["Ni","OH",1,2,"Ni(OH)₂","#4CAF6B","xanh lục",92.707,5.5e-16],
+  ["Co","OH",1,2,"Co(OH)₂","#E0729B","hồng",92.947,5.9e-15],
+  ["Mg","OH",1,2,"Mg(OH)₂","#F2F2F2","trắng",58.319,1.5e-11],
+  ["Zn","OH",1,2,"Zn(OH)₂","#F2F2F2","trắng",99.394,4.5e-17],
+  ["Cu","CO3",1,1,"CuCO₃","#5FBFC9","lam nhạt",123.554,2.5e-10]
 ];
 
 /* Danh mục dụng cụ — kích thước theo đơn vị vẽ trên bàn (880×520) */
@@ -2140,6 +2407,37 @@ const CAB_GROUPS=[
 const BENCH=[];
 let nextId=1, selId=null, heldReagent=null, rxnRows=[];
 
+/* Hiệu ứng Canvas phải tái lập được: cùng bình, cùng sự kiện và cùng tick
+   luôn sinh ra cùng hạt. Không dùng Math.random trong vòng lặp vẽ bàn. */
+function benchFxSeed(v,event,index,channel){
+  let h=(2166136261^((v&&v.id)||0))>>>0;
+  [event,index,channel].forEach(n=>{h=Math.imul(h^(n>>>0),16777619)>>>0;});
+  h^=h>>>16;h=Math.imul(h,2246822507)>>>0;h^=h>>>13;
+  return (Math.imul(h,3266489909)^h>>>16)>>>0;
+}
+function benchFxRand(seed,lane){
+  let n=(seed+Math.imul((lane||0)+1,2654435761))>>>0;
+  n^=n>>>16;n=Math.imul(n,2246822507)>>>0;n^=n>>>13;
+  return ((Math.imul(n,3266489909)^(n>>>16))>>>0)/4294967296;
+}
+function nextBenchFxEvent(v){v._fxEvent=(v._fxEvent||0)+1;return v._fxEvent;}
+function addBenchBubble(v,now,kind,tick){
+  if(reduceMotion||!v||v.bubs.length>=34)return;
+  const seed=benchFxSeed(v,kind==="boil"?11:17,tick,3),g=GEAR[v.type];
+  v.bubs.push({
+    x:v.x+(benchFxRand(seed,0)-.5)*(g.w-14),y:v.y-6-benchFxRand(seed,1)*8,
+    vy:.35+benchFxRand(seed,2)*(kind==="boil"?1:.55),r:1.1+benchFxRand(seed,3)*2.1,
+    phase:benchFxRand(seed,4)*Math.PI*2
+  });
+}
+function cadenceBenchBubble(v,now,kind){
+  if(reduceMotion)return;
+  const interval=kind==="boil"?92:210,tick=Math.floor(now/interval);
+  const key=kind==="boil"?"_boilBubbleTick":"_gasBubbleTick";
+  if(v[key]===tick)return;
+  v[key]=tick;addBenchBubble(v,now,kind,tick);
+}
+
 /* Đồng bộ hóa chất đang cầm với nút hủy và trạng thái trong tủ. */
 function setHeldReagent(r){
   heldReagent=r||null;
@@ -2150,17 +2448,32 @@ function setHeldReagent(r){
     b.textContent=heldReagent?`Bỏ chọn ${heldReagent.f}`:"Bỏ chọn hóa chất";
     b.title=heldReagent?`Ngừng dùng ${heldReagent.n}`:"Không có hóa chất nào đang được chọn";
   }
+  const state=$("#benchState");
+  if(state){
+    state.classList.toggle("active",!!heldReagent);
+    state.textContent=heldReagent
+      ? `Đang cầm ${heldReagent.f} · mỗi lần ${heldReagent.ind?"1 giọt":fmt(selectedDoseMl(),1)+" mL"}`
+      : "Không cầm hóa chất";
+  }
   document.querySelectorAll("#cabBody [data-chem]").forEach(x=>
     x.setAttribute("aria-pressed",String(!!heldReagent&&x.dataset.chem===heldReagent.id)));
+  renderTouchActions();
+}
+
+/* Liều rót do người dùng chọn, cho phép khảo sát trực tiếp ảnh hưởng tỉ lệ mol. */
+function selectedDoseMl(){
+  const el=$("#mDose"),v=el?+el.value:10;
+  return Number.isFinite(v)&&v>0?v:10;
 }
 
 function newVessel(type,x,y){
   const g=GEAR[type];
   return{id:nextId++,type,x,y,kind:g.kind,cap:g.cap||0,
     vol:0,ions:{},weakA:0,weakB:0,precip:[],gas:0,indicator:null,
-    temp:25,boil:0,parts:[],bubs:[],pops:[],stir:0,flash:0,co2:0,h2:0,
+    temp:25,boil:0,dry:false,dryResidueG:0,_thermalKspElapsed:0,parts:[],bubs:[],pops:[],stir:0,flash:0,co2:0,h2:0,
     on:null,lit:false,attach:null,residue:[],from:null,to:null,solids:{},
-    col:[36,34,42],sparks:[],tareG:0,dipped:null,cplx:[],flameIon:null};
+    col:[36,34,42],sparks:[],tareG:0,dipped:null,cplx:[],flameIon:null,
+    gasUntil:0,reactionBadge:null,_fxEvent:0,_boilBubbleTick:-1,_gasBubbleTick:-1};
 }
 const byId=id=>BENCH.find(o=>o.id===id);
 const sel=()=>byId(selId);
@@ -2178,6 +2491,8 @@ function pourInto(t,r,ml){
   }
   const L=ml/1000;
   t.vol+=ml;
+  /* Thêm dung môi làm cặn khô trở lại thành huyền phù/dung dịch. */
+  if(ml>0){t.dry=false;t.dryResidueG=0;t._thermalKspElapsed=0;}
   if(r.ions)Object.keys(r.ions).forEach(k=>addIon(t,k,r.c*L*r.ions[k]));
   if(r.weakA)t.weakA+=r.c*L;
   if(r.weakB)t.weakB+=r.c*L;
@@ -2192,6 +2507,7 @@ function vesselMass(v){
   let solute=0;
   Object.keys(v.ions||{}).forEach(k=>{if(ION[k])solute+=v.ions[k]*ION[k].M;});
   solute+=(v.weakA||0)*60.05+(v.weakB||0)*17.03;
+  (v.cplx||[]).forEach(c=>{solute+=c.mol*(c.M||0);});
   const L=Math.max(1e-9,v.vol/1000);
   // d ≈ 1 + 0,0007·(g chất tan mỗi lít): NaCl 1 M → 1,041 (thực nghiệm 1,040)
   const dens=v.vol>0?Math.min(1.6,1+0.0007*(solute/L)):1;
@@ -2217,40 +2533,212 @@ function addSolid(v,key,grams){
 
 /* Phức chất tan — làm đổi màu dung dịch chứ không tạo kết tủa */
 const COMPLEX=[
-  {cat:"Fe3",lig:"SCN",n:1,f:"[Fe(SCN)]²⁺",color:"#8E1B10",cname:"đỏ máu",
+  {cat:"Fe3",lig:"SCN",n:1,f:"[Fe(SCN)]²⁺",color:"#8E1B10",cname:"đỏ máu",z:2,M:113.927,
    eq:"Fe³⁺ + SCN⁻ → [Fe(SCN)]²⁺"},
-  {cat:"Cu",lig:"NH3",n:4,f:"[Cu(NH₃)₄]²⁺",color:"#1B3FB0",cname:"xanh lam đậm",
+  {cat:"Cu",lig:"NH3",n:4,f:"[Cu(NH₃)₄]²⁺",color:"#1B3FB0",cname:"xanh lam đậm",z:2,M:131.670,
    eq:"Cu²⁺ + 4NH₃ → [Cu(NH₃)₄]²⁺"},
-  {cat:"I2",lig:"Tinhbot",n:1,f:"I₂·hồ tinh bột",color:"#141A4A",cname:"xanh tím đen",
+  {cat:"I2",lig:"Tinhbot",n:1,f:"I₂·hồ tinh bột",color:"#141A4A",cname:"xanh tím đen",z:0,M:415.949,
    eq:"I₂ + hồ tinh bột → phức xanh tím đen"}
 ];
 /* Hiđroxit lưỡng tính tan lại trong kiềm dư */
 const AMPHO=[
-  {p:"Zn(OH)₂",cat:"Zn",n:2,f:"[Zn(OH)₄]²⁻",eq:"Zn(OH)₂ + 2OH⁻ → [Zn(OH)₄]²⁻"},
-  {p:"Al(OH)₃",cat:"Al",n:1,f:"[Al(OH)₄]⁻",eq:"Al(OH)₃ + OH⁻ → [Al(OH)₄]⁻"}
+  {p:"Zn(OH)₂",cat:"Zn",n:2,f:"[Zn(OH)₄]²⁻",z:-2,M:133.408,eq:"Zn(OH)₂ + 2OH⁻ → [Zn(OH)₄]²⁻"},
+  {p:"Al(OH)₃",cat:"Al",n:1,f:"[Al(OH)₄]⁻",z:-1,M:95.010,eq:"Al(OH)₃ + OH⁻ → [Al(OH)₄]⁻"}
 ];
 /* Kết tủa tan lại trong amoniac dư tạo phức amin */
 const AMMINE=[
-  {p:"AgCl",n:2,f:"[Ag(NH₃)₂]⁺",back:{Cl:1},color:null,cname:"không màu",
+  {p:"AgCl",n:2,f:"[Ag(NH₃)₂]⁺",back:{Cl:1},color:null,cname:"không màu",z:1,M:141.930,
    eq:"AgCl + 2NH₃ → [Ag(NH₃)₂]⁺ + Cl⁻"},
-  {p:"Cu(OH)₂",n:4,f:"[Cu(NH₃)₄]²⁺",back:{OH:2},color:"#1B3FB0",cname:"xanh lam đậm",
+  {p:"Cu(OH)₂",n:4,f:"[Cu(NH₃)₄]²⁺",back:{OH:2},color:"#1B3FB0",cname:"xanh lam đậm",z:2,M:131.670,
    eq:"Cu(OH)₂ + 4NH₃ → [Cu(NH₃)₄]²⁺ + 2OH⁻"},
-  {p:"Ni(OH)₂",n:6,f:"[Ni(NH₃)₆]²⁺",back:{OH:2},color:"#4C6BD8",cname:"xanh tím",
+  {p:"Ni(OH)₂",n:6,f:"[Ni(NH₃)₆]²⁺",back:{OH:2},color:"#4C6BD8",cname:"xanh tím",z:2,M:160.879,
    eq:"Ni(OH)₂ + 6NH₃ → [Ni(NH₃)₆]²⁺ + 2OH⁻"},
-  {p:"Zn(OH)₂",n:4,f:"[Zn(NH₃)₄]²⁺",back:{OH:2},color:null,cname:"không màu",
+  {p:"Zn(OH)₂",n:4,f:"[Zn(NH₃)₄]²⁺",back:{OH:2},color:null,cname:"không màu",z:2,M:133.504,
    eq:"Zn(OH)₂ + 4NH₃ → [Zn(NH₃)₄]²⁺ + 2OH⁻"}
 ];
 /* Phản ứng oxi hóa khử làm mất màu tím pemanganat */
 const REDOX=[
   {ox:"MnO4",red:"Fe2",nOx:1,nRed:5,nH:8,gives:{Mn2:1,Fe3:5},
    eq:"MnO₄⁻ + 5Fe²⁺ + 8H⁺ → Mn²⁺ + 5Fe³⁺ + 4H₂O"},
-  {ox:"MnO4",red:"C2O4",nOx:2,nRed:5,nH:6,gives:{Mn2:2},co2:10,
+  {ox:"MnO4",red:"C2O4",nOx:2,nRed:5,nH:16,gives:{Mn2:2},co2:10,
    eq:"2MnO₄⁻ + 5C₂O₄²⁻ + 16H⁺ → 2Mn²⁺ + 10CO₂↑ + 8H₂O"}
 ];
 function pushCplx(t,c,mol){
   t.cplx=t.cplx||[];
   const f=t.cplx.find(x=>x.f===c.f);
-  if(f)f.mol+=mol; else t.cplx.push({f:c.f,color:c.color,cname:c.cname,mol});
+  if(f)f.mol+=mol;
+  else t.cplx.push({f:c.f,color:c.color,cname:c.cname,mol,M:c.M||0,z:c.z||0});
+}
+
+function markReaction(t,text,kind){
+  const now=performance.now();
+  t.reactionBadge={text,kind:kind||"reaction",until:now+2600};
+  if(kind==="gas")t.gasUntil=now+3000;
+}
+
+/* Cân bằng CH₃COOH + NH₃ ⇌ CH₃COO⁻ + NH₄⁺.
+   K = Ka(CH₃COOH)·Kb(NH₃)/Kw ≈ 3,24×10⁴; giải extent bằng chia đôi
+   để kết quả không phụ thuộc thứ tự rót và vẫn bảo toàn từng họ acid/base. */
+function equilibrateWeakPair(t){
+  const Ka=1.8e-5,Kb=1.8e-5,K=Ka*Kb/Kw;
+  const ha=Math.max(0,t.weakA||0),b=Math.max(0,t.weakB||0);
+  const a=Math.max(0,ionOf(t,"Ac")),bh=Math.max(0,ionOf(t,"NH4"));
+  const eps=1e-16;
+  let lo=-Math.min(a,bh)+eps,hi=Math.min(ha,b)-eps;
+  if(!(hi>lo))return 0;
+  const f=x=>Math.log(Math.max(eps,a+x))+Math.log(Math.max(eps,bh+x))
+    -Math.log(Math.max(eps,ha-x))-Math.log(Math.max(eps,b-x))-Math.log(K);
+  let flo=f(lo),fhi=f(hi);
+  if(flo>0)hi=lo;
+  else if(fhi<0)lo=hi;
+  else for(let i=0;i<72;i++){
+    const mid=(lo+hi)/2,fm=f(mid);
+    if(fm>0)hi=mid;else lo=mid;
+  }
+  const x=(lo+hi)/2;
+  if(Math.abs(x)<1e-14)return 0;
+  t.weakA=Math.max(0,ha-x);t.weakB=Math.max(0,b-x);
+  t.ions.Ac=Math.max(0,a+x);t.ions.NH4=Math.max(0,bh+x);
+  trim(t);
+  return x;
+}
+
+function precipRow(formula){return PRECIP.find(row=>row[4]===formula)||null;}
+function ionConc(t,key){
+  const L=t.vol/1000;
+  return L>0?Math.max(0,ionOf(t,key)/L):0;
+}
+function logIonProduct(t,row,delta=0){
+  const L=t.vol/1000;
+  if(!(L>0))return -Infinity;
+  const ca=(ionOf(t,row[0])+delta*row[2])/L;
+  const cb=(ionOf(t,row[1])+delta*row[3])/L;
+  if(!(ca>0&&cb>0))return -Infinity;
+  return row[2]*Math.log(ca)+row[3]*Math.log(cb);
+}
+/* Bisection extent cho precipitation, với activity a_i ≈ [i]/1 M. */
+function precipitationExtent(t,row){
+  const max=Math.min(ionOf(t,row[0])/row[2],ionOf(t,row[1])/row[3]);
+  if(!(max>1e-14)||!(row[8]>0))return 0;
+  const target=Math.log(row[8]);
+  if(logIonProduct(t,row)<=target+1e-12)return 0;
+  let lo=0,hi=max;
+  for(let i=0;i<64;i++){
+    const mid=(lo+hi)/2;
+    if(logIonProduct(t,row,-mid)>target)lo=mid;else hi=mid;
+  }
+  return hi;
+}
+/* Exchange cùng cation (đặc biệt AgCl + I⁻ → AgI + Cl⁻). */
+function exchangePrecipitates(t,ev){
+  for(let round=0;round<48;round++){
+    let best=null;
+    (t.precip||[]).forEach(p=>{
+      const old=precipRow(p.f);
+      if(!old||p.mol<=1e-14)return;
+      PRECIP.forEach(next=>{
+        if(next===old||next[0]!==old[0]||next[2]!==old[2]||next[3]!==old[3])return;
+        if(!(ionOf(t,next[1])>1e-14)||!(next[8]>0&&old[8]>0))return;
+        const q=Math.log(Math.max(1e-300,ionConc(t,old[1]))/Math.max(1e-300,ionConc(t,next[1])));
+        const k=Math.log(old[8]/next[8]);
+        const drive=k-q;
+        if(drive>1e-10&&(!best||drive>best.drive))best={p,old,next,drive};
+      });
+    });
+    if(!best)break;
+    const {p,old,next}=best;
+    const max=Math.min(p.mol,ionOf(t,next[1])/next[3]);
+    if(!(max>1e-14))break;
+    const target=Math.log(old[8]/next[8]);
+    const quotient=x=>Math.log(Math.max(1e-300,ionConc(t,old[1])+old[3]*x/(t.vol/1000)))
+      -Math.log(Math.max(1e-300,ionConc(t,next[1])-next[3]*x/(t.vol/1000)));
+    let lo=0,hi=max;
+    if(quotient(hi)<target)lo=hi;
+    else for(let i=0;i<64;i++){
+      const mid=(lo+hi)/2;
+      if(quotient(mid)<target)lo=mid;else hi=mid;
+    }
+    const x=lo===hi?hi:(lo+hi)/2;
+    if(!(x>1e-14))break;
+    p.mol-=x;
+    addIon(t,old[1],old[3]*x);
+    t.ions[next[1]]-=next[3]*x;
+    t.parts=[];
+    pushPrecip(t,next,x);
+    ev.push(`<b>${old[4]} + ${next[1]}⁻ ⇌ ${next[4]} + ${old[1]}⁻</b> — trao đổi pha rắn theo Ksp.`);
+  }
+  if(t.precip)t.precip=t.precip.filter(p=>p.mol>1e-12);
+}
+function dissolveAtKsp(t,ev){
+  for(let round=0;round<48;round++){
+    let best=null;
+    (t.precip||[]).forEach(p=>{
+      const row=precipRow(p.f);
+      if(!row||p.mol<=1e-14||!(row[8]>0))return;
+      const drive=Math.log(row[8])-logIonProduct(t,row);
+      if(drive>1e-10&&(!best||drive>best.drive))best={p,row,drive};
+    });
+    if(!best)break;
+    const {p,row}=best,L=t.vol/1000,target=Math.log(row[8]);
+    const max=p.mol;
+    const qAfter=x=>logIonProduct(t,row,x);
+    let lo=0,hi=max;
+    if(qAfter(hi)<target)lo=hi;
+    else for(let i=0;i<64;i++){
+      const mid=(lo+hi)/2;
+      if(qAfter(mid)<target)lo=mid;else hi=mid;
+    }
+    const x=lo===hi?hi:(lo+hi)/2;
+    if(!(x>1e-14))break;
+    p.mol-=x;
+    addIon(t,row[0],row[2]*x);addIon(t,row[1],row[3]*x);
+    t.parts=[];
+    ev.push(`<b>${row[4]} ⇌ ${row[2]}${ION[row[0]].s} + ${row[3]}${ION[row[1]].s}</b> — hòa tan theo Ksp.`);
+  }
+  if(t.precip)t.precip=t.precip.filter(p=>p.mol>1e-12);
+}
+/* Axit mạnh proton hóa OH⁻ của hydroxide rắn trực tiếp:
+   M(OH)n(s) + nH⁺ → Mⁿ⁺ + nH₂O. Đây là phản ứng acid-driven, không
+   thể biểu diễn chỉ bằng Q/Ksp nếu H⁺ còn dư nhưng OH⁻ tự do đã hết. */
+function dissolveHydroxideWithAcid(t,ev){
+  for(let round=0;round<48;round++){
+    const h=ionOf(t,"H");
+    if(h<=1e-14)break;
+    let best=null;
+    (t.precip||[]).forEach(p=>{
+      const row=precipRow(p.f);
+      if(row&&row[1]==="OH"&&p.mol>1e-14&&(!best||row[2]>best.row[2]))best={p,row};
+    });
+    if(!best)break;
+    const {p,row}=best,x=Math.min(p.mol,h/row[3]);
+    if(!(x>1e-14))break;
+    p.mol-=x;t.ions.H-=row[3]*x;addIon(t,row[0],row[2]*x);
+    ev.push(`<b>${row[4]} + ${row[3]}H⁺ → ${row[2]}${ION[row[0]].s} + H₂O</b> — axit làm tan <i>${fmt(x,5)} mol</i> kết tủa.`);
+  }
+  if(t.precip)t.precip=t.precip.filter(p=>p.mol>1e-12);
+  trim(t);
+}
+function precipitateAtKsp(t){
+  const ev=[];
+  if(!(t.vol>0))return ev;
+  exchangePrecipitates(t,ev);
+  for(let round=0;round<64;round++){
+    let best=null;
+    PRECIP.forEach(row=>{
+      const drive=logIonProduct(t,row)-Math.log(row[8]);
+      if(drive>1e-10&&(!best||drive>best.drive))best={row,drive};
+    });
+    if(!best)break;
+    const {row}=best,x=precipitationExtent(t,row);
+    if(!(x>1e-14))break;
+    t.ions[row[0]]-=row[2]*x;t.ions[row[1]]-=row[3]*x;
+    pushPrecip(t,row,x);
+    ev.push(`<b>${row[2]>1?row[2]:""}${ION[row[0]].s} + ${row[3]>1?row[3]:""}${ION[row[1]].s} → ${row[4]}↓</b> — kết tủa <i>${row[6]}</i>, <i>${fmt(x,5)} mol</i>.`);
+    exchangePrecipitates(t,ev);
+  }
+  dissolveAtKsp(t,ev);
+  trim(t);
+  return ev;
 }
 
 function react(t){
@@ -2267,6 +2755,8 @@ function react(t){
       Object.keys(a.gives).forEach(g=>addIon(t,g,a.gives[g]*x));
       if(a.co2){t.co2=(t.co2||0)+x*a.co2;t.gas=1;}
       if(a.h2){t.h2=(t.h2||0)+x*a.h2;t.gas=1;}
+      if(a.co2)markReaction(t,"↑ CO₂","gas");
+      if(a.h2)markReaction(t,"↑ H₂","gas");
       ev.push(`<b>${a.eq}</b> — tan <i>${fmt(x*S.M,3)} g</i>${a.co2?", sủi bọt CO₂":a.h2?", sủi bọt H₂":""}.`);
       if(t.solids[k]<1e-12)delete t.solids[k];
     });
@@ -2307,6 +2797,27 @@ function react(t){
     t.ions.H-=x;t.weakB-=x;addIon(t,"NH4",x);
     ev.push(`<b>NH₃ + H⁺ → NH₄⁺</b> — tạo <i>${fmt(x,5)} mol</i> muối amoni.`);
   }
+  // 4b. acid/base mạnh tác dụng với ion liên hợp còn lại
+  if(ionOf(t,"OH")>1e-12&&ionOf(t,"NH4")>1e-12){
+    const x=Math.min(ionOf(t,"OH"),ionOf(t,"NH4"));
+    t.ions.OH-=x;t.ions.NH4-=x;t.weakB+=x;
+    ev.push(`<b>NH₄⁺ + OH⁻ → NH₃ + H₂O</b> — giải phóng <i>${fmt(x,5)} mol</i> NH₃.`);
+  }
+  if(ionOf(t,"H")>1e-12&&ionOf(t,"Ac")>1e-12){
+    const x=Math.min(ionOf(t,"H"),ionOf(t,"Ac"));
+    t.ions.H-=x;t.ions.Ac-=x;t.weakA+=x;
+    ev.push(`<b>CH₃COO⁻ + H⁺ → CH₃COOH</b> — proton hóa <i>${fmt(x,5)} mol</i> axetat.`);
+  }
+  trim(t);
+  // Acid dư có thể hòa tan hydroxide rắn dù OH⁻ tự do đã bị trung hòa.
+  dissolveHydroxideWithAcid(t,ev);
+  // 4c. acid yếu + base yếu: giải đúng cân bằng, không coi như hai dung dịch độc lập
+  const weakX=equilibrateWeakPair(t);
+  if(Math.abs(weakX)>1e-9){
+    ev.push(weakX>0
+      ? `<b>CH₃COOH + NH₃ ⇌ CH₃COO⁻ + NH₄⁺</b> — chuyển proton <i>${fmt(weakX,5)} mol</i>.`
+      : `<b>CH₃COO⁻ + NH₄⁺ ⇌ CH₃COOH + NH₃</b> — cân bằng lùi <i>${fmt(-weakX,5)} mol</i>.`);
+  }
   trim(t);
   // 5. amoniac đóng vai bazơ tạo hiđroxit
   if(t.weakB>1e-12){
@@ -2327,24 +2838,14 @@ function react(t){
     const x=Math.min(ionOf(t,"Fe3")/2,ionOf(t,"CO3")/3);
     if(x>1e-12){
       t.ions.Fe3-=2*x;t.ions.CO3-=3*x;
-      pushPrecip(t,[null,null,null,null,"Fe(OH)₃","#8E3A1C","nâu đỏ"],2*x);
-      t.gas=1;
+      pushPrecip(t,[null,null,null,null,"Fe(OH)₃","#8E3A1C","nâu đỏ",106.866],2*x);
+      t.co2=(t.co2||0)+3*x;t.gas=1;markReaction(t,"↓ Fe(OH)₃ · ↑ CO₂","gas");
       ev.push(`<b>2Fe³⁺ + 3CO₃²⁻ + 3H₂O → 2Fe(OH)₃↓ + 3CO₂↑</b> — thủy phân hoàn toàn, kết tủa <i>nâu đỏ</i> kèm sủi bọt.`);
     }
   }
   trim(t);
-  // 7. kết tủa theo bảng tính tan
-  PRECIP.forEach(row=>{
-    const [cat,an,a,b,formula,,cname]=row;
-    const nc=ionOf(t,cat),na=ionOf(t,an);
-    if(nc<1e-12||na<1e-12)return;
-    const x=Math.min(nc/a,na/b);
-    if(x<1e-12)return;
-    t.ions[cat]-=a*x;t.ions[an]-=b*x;
-    pushPrecip(t,row,x);
-    ev.push(`<b>${a>1?a:""}${ION[cat].s} + ${b>1?b:""}${ION[an].s} → ${formula}↓</b> — kết tủa <i>${cname}</i>, <i>${fmt(x,5)} mol</i>.`);
-  });
-  trim(t);
+  // 7. kết tủa theo Q/Ksp, không phụ thuộc thứ tự bảng.
+  ev.push(...precipitateAtKsp(t));
 
   // 8. oxi hóa khử trong môi trường axit
   REDOX.forEach(R=>{
@@ -2355,6 +2856,7 @@ function react(t){
     t.ions[R.ox]-=R.nOx*x;t.ions[R.red]-=R.nRed*x;t.ions.H-=R.nH*x;
     Object.keys(R.gives).forEach(g=>addIon(t,g,R.gives[g]*x));
     if(R.co2){t.co2=(t.co2||0)+R.co2*x;t.gas=1;}
+    if(R.co2)markReaction(t,"↑ CO₂","gas");
     ev.push(`<b>${R.eq}</b> — màu tím <i>nhạt dần rồi mất hẳn</i>.`);
   });
   trim(t);
@@ -2368,7 +2870,7 @@ function react(t){
     const x=Math.min(p.mol,oh/A.n);
     if(x<1e-12)return;
     p.mol-=x;t.ions.OH-=A.n*x;
-    pushCplx(t,{f:A.f,color:null,cname:"không màu"},x);
+    pushCplx(t,A,x);
     t.parts=[];
     ev.push(`<b>${A.eq}</b> — kết tủa <i>tan trở lại</i> trong kiềm dư.`);
   });
@@ -2380,7 +2882,7 @@ function react(t){
     if(x<1e-12)return;
     p.mol-=x;t.weakB-=A.n*x;
     Object.keys(A.back).forEach(k=>addIon(t,k,A.back[k]*x));
-    pushCplx(t,{f:A.f,color:A.color,cname:A.cname},x);
+    pushCplx(t,A,x);
     t.parts=[];
     ev.push(`<b>${A.eq}</b> — kết tủa <i>tan hết</i> trong amoniac dư`+
       (A.color?`, dung dịch chuyển <i>${A.cname}</i>.`:"."));
@@ -2404,11 +2906,13 @@ function react(t){
 }
 function pushPrecip(t,row,mol){
   const found=t.precip.find(p=>p.f===row[4]);
-  // khối lượng mol suy từ chính các ion đã kết hợp
-  const M=(row[0]&&ION[row[0]]&&ION[row[1]])
-    ? row[2]*ION[row[0]].M+row[3]*ION[row[1]].M : (row[7]||100);
+  // Ưu tiên M của pha rắn: một số phản ứng (Ag₂O) còn giải phóng H₂O nên
+  // không thể suy M bằng tổng khối lượng mọi ion ở vế trái.
+  const M=row[7]||((row[0]&&ION[row[0]]&&ION[row[1]])
+    ? row[2]*ION[row[0]].M+row[3]*ION[row[1]].M : 100);
   if(found)found.mol+=mol;
   else t.precip.push({f:row[4],color:row[5],cname:row[6],mol,M});
+  markReaction(t,`↓ ${row[4]}`,"precip");
   if(t.parts&&typeof spawnPrecip==="function")spawnPrecip(t,row[5],mol);
 }
 
@@ -2416,20 +2920,34 @@ function pushPrecip(t,row,mol){
 function tubePh(t){
   const L=t.vol/1000;
   if(L<=0)return 7;
-  const h=ionOf(t,"H")/L, oh=ionOf(t,"OH")/L;
-  if(h>1e-9)return clampPh(-Math.log10(h));
-  if(oh>1e-9)return clampPh(14+Math.log10(oh));
-  const HA=t.weakA/L, A=ionOf(t,"Ac")/L;
-  const B=t.weakB/L, BH=ionOf(t,"NH4")/L;
-  const pKa=-Math.log10(1.8e-5);          // CH₃COOH
-  const pKaNH4=14+Math.log10(1.8e-5);     // NH₄⁺ : pK_a = 14 − pK_b = 9,26
-  if(HA>1e-9&&A>1e-9)return clampPh(pKa+Math.log10(A/HA));
-  if(HA>1e-9)return clampPh(-Math.log10(Math.sqrt(1.8e-5*HA)));
-  if(A>1e-9)return clampPh(14+Math.log10(Math.sqrt((Kw/1.8e-5)*A)));
-  if(B>1e-9&&BH>1e-9)return clampPh(pKaNH4+Math.log10(B/BH));
-  if(B>1e-9)return clampPh(14+Math.log10(Math.sqrt(1.8e-5*B)));
-  if(BH>1e-9)return clampPh(-Math.log10(Math.sqrt((Kw/1.8e-5)*BH)));
-  return 7;
+  const strongH=ionOf(t,"H")/L,strongOH=ionOf(t,"OH")/L;
+  if(strongH>1e-9)return clampPh(-Math.log10(strongH));
+  if(strongOH>1e-9)return clampPh(14+Math.log10(strongOH));
+
+  /* Charge balance cho hai họ CH₃COOH/CH₃COO⁻ và NH₄⁺/NH₃.
+     Cách này xử lý đúng cả ammonium acetate và mọi tỉ lệ acid yếu/base yếu,
+     thay vì ưu tiên một công thức Henderson–Hasselbalch theo thứ tự if/else. */
+  const KaA=1.8e-5,KaBH=Kw/1.8e-5;
+  const CtA=((t.weakA||0)+ionOf(t,"Ac"))/L;
+  const CtB=((t.weakB||0)+ionOf(t,"NH4"))/L;
+  let fixed=0;
+  Object.keys(t.ions||{}).forEach(k=>{
+    if(k==="H"||k==="OH"||k==="Ac"||k==="NH4")return;
+    fixed+=(ION_CHARGE[k]||0)*t.ions[k]/L;
+  });
+  (t.cplx||[]).forEach(c=>{fixed+=(c.z||0)*c.mol/L;});
+  const charge=pH=>{
+    const H=Math.pow(10,-pH),OH=Kw/H;
+    const acetate=CtA*KaA/(KaA+H);
+    const ammonium=CtB*H/(KaBH+H);
+    return H+Math.max(0,fixed)+ammonium-OH-Math.max(0,-fixed)-acetate;
+  };
+  let lo=0,hi=14;
+  for(let i=0;i<72;i++){
+    const mid=(lo+hi)/2;
+    if(charge(mid)>0)lo=mid;else hi=mid;
+  }
+  return clampPh((lo+hi)/2);
 }
 function tubeColor(t){
   if(t.vol<=0)return "rgba(150,150,170,.12)";
@@ -2518,17 +3036,55 @@ function vesselShape(o,ctx,inset){
       ctx.rect(x,y,w,h);
   }
 }
-/* mực chất lỏng: trả về y của mặt thoáng theo phân số thể tích */
+/* Bề rộng lòng bình tại cao độ q (0 = miệng, 1 = đáy). */
+function vesselWidthRatio(type,q){
+  q=Math.max(0,Math.min(1,q));
+  if(type==="flask")return q<0.30?0.27:0.27+0.67*Math.min(1,(q-0.30)/0.62);
+  if(type==="rflask"){
+    if(q<0.24)return 0.25;
+    const s=(q-0.24)/0.76;
+    return Math.max(0.18,Math.sqrt(Math.max(0,1-Math.pow(2*s-1,2))));
+  }
+  if(type==="tube"){
+    const cap=0.84;
+    if(q<=cap)return 0.82;
+    const s=(q-cap)/(1-cap);
+    return Math.max(0.12,0.82*Math.sqrt(Math.max(0,1-s*s)));
+  }
+  if(type==="cylinder"||type==="burette")return 0.76;
+  return 0.90;
+}
+const LEVEL_CACHE={};
+function liquidLevelQ(type,f){
+  f=Math.max(0,Math.min(1,f));
+  const key=type+":"+f.toFixed(4);
+  if(LEVEL_CACHE[key]!==undefined)return LEVEL_CACHE[key];
+  const N=96,areas=[];let total=0;
+  for(let i=0;i<N;i++){
+    const q=(i+0.5)/N,a=Math.pow(vesselWidthRatio(type,q),2);
+    areas.push(a);total+=a;
+  }
+  const target=total*f;
+  let acc=0,q=1;
+  for(let i=N-1;i>=0;i--){
+    const next=acc+areas[i];
+    if(next>=target){q=(i+(next-target)/areas[i])/N;break;}
+    acc=next;
+  }
+  LEVEL_CACHE[key]=q;return q;
+}
+/* Mặt thoáng tính từ tích phân tiết diện, nên bình tam giác và bình cầu không còn
+   dâng tuyến tính theo chiều cao như một ống trụ. */
 function liqTopOf(o){
-  const g=GEAR[o.type];
-  const f=Math.max(0,Math.min(1,o.vol/(o.cap||1)));
-  let usable=g.h-10, base=o.y-6;
-  if(o.type==="flask"){usable=g.h*0.72;}
-  if(o.type==="rflask"){usable=g.h*0.68;}
-  if(o.type==="burette"){usable=g.h-40;base=o.y-32;}
-  if(o.type==="cylinder"){usable=g.h-18;base=o.y-14;}
-  if(o.type==="tube"){usable=g.h-g.w/2-6;base=o.y-g.w/2;}
-  return base-f*usable;
+  const g=GEAR[o.type],f=Math.max(0,Math.min(1,o.vol/(o.cap||1)));
+  const padTop=o.type==="burette"?4:5;
+  const padBottom=o.type==="burette"?31:o.type==="cylinder"?14:6;
+  const q=liquidLevelQ(o.type,f);
+  return o.y-g.h+padTop+q*(g.h-padTop-padBottom);
+}
+function vesselWidthAt(o,y){
+  const g=GEAR[o.type],q=(y-(o.y-g.h))/g.h;
+  return Math.max(8,g.w*vesselWidthRatio(o.type,q));
 }
 
 /* ---- vẽ chất lỏng bên trong ---- */
@@ -2539,15 +3095,19 @@ function paintLiquid(o,t){
   vesselShape(o,BX,2.5);BX.clip();
   const top=liqTopOf(o);
   const tgt=parseColor(tubeColor(o));
-  if(!o.col)o.col=tgt.slice();
-  for(let c=0;c<3;c++)o.col[c]+=(tgt[c]-o.col[c])*0.11;   // màu chuyển mượt khi phản ứng
-  const col=o.col.map(Math.round);
+  const stored=o.col||tgt;
+  if(!reduceMotion){
+    if(!o.col)o.col=tgt.slice();
+    for(let c=0;c<3;c++)o.col[c]+=(tgt[c]-o.col[c])*0.11; // màu chuyển mượt khi phản ứng
+  }
+  const col=(reduceMotion?tgt:stored).map(Math.round);
+  const motionT=reduceMotion?0:t;
   const wob=(o.stir*3.2)+(o.boil?1.6:0);
   if(o.vol>0.02){
     BX.beginPath();
-    const L=o.x-g.w/2-4,R=o.x+g.w/2+4;
+    const surfaceW=vesselWidthAt(o,top),L=o.x-surfaceW/2,R=o.x+surfaceW/2;
     BX.moveTo(L,top);
-    for(let x=L;x<=R;x+=3)BX.lineTo(x,top+Math.sin(x*0.17+t*(2.1+o.stir*5+(o.boil?6:0))+o.id)*(1.3+wob));
+    for(let x=L;x<=R;x+=3)BX.lineTo(x,top+Math.sin(x*.17+motionT*(2.1+o.stir*5+(o.boil?6:0))+o.id)*(1.3+wob));
     BX.lineTo(R,o.y+2);BX.lineTo(L,o.y+2);BX.closePath();
     const gr=BX.createLinearGradient(o.x-g.w/2,0,o.x+g.w/2,0);
     gr.addColorStop(0,`rgba(${Math.round(col[0]*.68)},${Math.round(col[1]*.68)},${Math.round(col[2]*.68)},.96)`);
@@ -2560,78 +3120,98 @@ function paintLiquid(o,t){
     dep.addColorStop(0,sh(0));dep.addColorStop(1,sh(.30));
     BX.fillStyle=dep;BX.fillRect(o.x-g.w/2-4,top,g.w+8,o.y-top+2);
     // mặt thoáng dạng ellipse cho cảm giác khối
-    if(["beaker","cylinder","tube","burette","rflask"].includes(o.type)){
-      const rw=g.w/2-2.5;
+    if(["beaker","cylinder","tube","burette","rflask","flask"].includes(o.type)){
+      const rw=Math.max(3,surfaceW/2-2.5);
       BX.fillStyle=`rgba(${Math.min(255,col[0]+46)},${Math.min(255,col[1]+46)},${Math.min(255,col[2]+46)},.92)`;
       BX.beginPath();BX.ellipse(o.x,top,rw,rw*0.17,0,0,Math.PI*2);BX.fill();
       BX.strokeStyle=fg(.30);BX.lineWidth=1;
       BX.beginPath();BX.ellipse(o.x,top,rw,rw*0.17,0,0,Math.PI*2);BX.stroke();
+      // Meniscus lõm của dung dịch nước trong thủy tinh borosilicate.
+      BX.strokeStyle=sh(.24);BX.lineWidth=.8;
+      BX.beginPath();BX.ellipse(o.x,top+Math.max(1,rw*.035),rw*.84,rw*.10,0,0,Math.PI);BX.stroke();
     }else{
       BX.fillStyle=fg(.18);BX.fillRect(o.x-g.w/2-4,top-1,g.w+8,2);
     }
     if(o.flash>0){BX.fillStyle=`rgba(255,255,255,${o.flash*0.15})`;
       BX.fillRect(o.x-g.w/2-4,top,g.w+8,o.y-top+2);}
   }
-  // tia lóe khi kết tủa vừa hình thành
-  o.sparks=(o.sparks||[]).filter(s=>{
-    s.a-=0.035;s.y-=0.5;
-    if(s.a<=0)return false;
-    BX.fillStyle=`rgba(255,255,255,${s.a*0.8})`;
-    BX.beginPath();BX.arc(s.x,s.y,s.r,0,Math.PI*2);BX.fill();
+  const now=performance.now();
+  // Tia lóe dùng tuổi đời được gắn lúc sinh, không tự thay đổi theo số frame render.
+  const drawSpark=s=>{
+    const age=now-(s.t0||now),life=s.life||290;
+    if(!reduceMotion&&age>=life)return false;
+    const f=reduceMotion?0:age/life;
+    BX.fillStyle=`rgba(255,255,255,${((1-f)*.8).toFixed(3)})`;
+    BX.beginPath();BX.arc(s.x,s.y-f*(s.rise||8),s.r+f*.45,0,Math.PI*2);BX.fill();
     return true;
-  });
+  };
+  if(reduceMotion)(o.sparks||[]).forEach(drawSpark);
+  else o.sparks=(o.sparks||[]).filter(drawSpark);
   // kết tủa lắng
   const floorY=o.y-4;
   let settled=o.parts.filter(p=>p.rest!==null).length;
-  const now=performance.now();
-  o.parts=o.parts.filter(p=>{
-    if(p.born&&now<p.born)return true;
-    if(p.rest===null){
+  const drawParticle=(p,index)=>{
+    if(!reduceMotion&&p.born&&now<p.born)return true;
+    const seed=p.fxSeed===undefined?benchFxSeed(o,0,index,1):p.fxSeed;
+    const settleJitter=p.settleJitter===undefined?benchFxRand(seed,0)*3:p.settleJitter;
+    const lift=p.lift===undefined?1.4+benchFxRand(seed,1):p.lift;
+    const drift=p.drift===undefined?benchFxRand(seed,2)-.5:p.drift;
+    const phase=p.phase===undefined?benchFxRand(seed,3)*Math.PI*2:p.phase;
+    if(!reduceMotion&&p.rest===null){
       p.vy=Math.min(1.5,p.vy+0.028);p.y+=p.vy;
-      p.x+=Math.sin(t*2+p.y*0.1)*0.22;
+      p.x+=Math.sin(t*2+p.y*0.1+phase)*0.22;
       const stack=Math.min(g.h*0.42,settled*0.32);
-      const lim=floorY-stack-Math.random()*3;
+      const lim=floorY-stack-settleJitter;
       if(p.y>=lim){p.y=lim;p.rest=p.y;settled++;}
-    }else if(o.stir>0.02||o.boil){
-      p.y-=(o.stir+ (o.boil?0.35:0))*(1.4+Math.random());
-      p.x+=(Math.random()-.5)*(o.stir*5+(o.boil?1.4:0));
+    }else if(!reduceMotion&&(o.stir>0.02||o.boil)){
+      p.y-=(o.stir+(o.boil ? .35 : 0))*lift;
+      p.x+=drift*(o.stir*5+(o.boil?1.4:0));
       if(p.y<top+5)p.y=top+5;
       if(o.stir<0.05&&!o.boil)p.rest=null;
     }
-    const hw=g.w/2-4;
-    p.x=Math.max(o.x-hw,Math.min(o.x+hw,p.x));
+    if(!reduceMotion){
+      const hw=g.w/2-4;
+      p.x=Math.max(o.x-hw,Math.min(o.x+hw,p.x));
+    }
     BX.fillStyle=`rgba(${p.col[0]},${p.col[1]},${p.col[2]},.88)`;
     BX.beginPath();BX.arc(p.x,p.y,p.r,0,Math.PI*2);BX.fill();
     return true;
-  });
+  };
+  if(reduceMotion)o.parts.forEach(drawParticle);
+  else o.parts=o.parts.filter(drawParticle);
   // bọt khí
-  const gassy=o.gas||o.boil;
-  if(gassy&&o.vol>0.05&&Math.random()<(o.boil?0.6:0.28)&&o.bubs.length<34){
-    o.bubs.push({x:o.x+(Math.random()-.5)*(g.w-14),y:o.y-6-Math.random()*8,
-      vy:.35+Math.random()*(o.boil?1.0:.55),r:1.1+Math.random()*2.1});
-  }
-  o.bubs=o.bubs.filter(b=>{
-    b.y-=b.vy;b.x+=Math.sin(t*3+b.y*0.08)*0.3;
-    if(b.y<top+2){o.pops.push({x:b.x,y:top+2,r:b.r,a:1});return false;}
+  const gassy=o.boil||now<(o.gasUntil||0);
+  if(gassy&&o.vol>0.05)cadenceBenchBubble(o,now,o.boil?"boil":"gas");
+  const drawBubble=b=>{
+    if(!reduceMotion){
+      b.y-=b.vy;b.x+=Math.sin(motionT*3+b.y*.08+(b.phase||0))*.3;
+      if(b.y<top+2){o.pops.push({x:b.x,y:top+2,r:b.r,t0:now,phase:b.phase||0});return false;}
+    }
     BX.strokeStyle=fg(.55);BX.lineWidth=1;
     BX.beginPath();BX.arc(b.x,b.y,b.r,0,Math.PI*2);BX.stroke();
     return true;
-  });
-  o.pops=o.pops.filter(p=>{
-    p.a-=0.07;p.r+=0.5;
-    if(p.a<=0)return false;
-    BX.strokeStyle=`rgba(255,255,255,${p.a*0.55})`;BX.lineWidth=1;
-    BX.beginPath();BX.arc(p.x,p.y,p.r,0,Math.PI*2);BX.stroke();
+  };
+  if(reduceMotion)o.bubs.forEach(drawBubble);
+  else o.bubs=o.bubs.filter(drawBubble);
+  const drawPop=p=>{
+    const f=(now-(p.t0||now))/220;
+    if(!reduceMotion&&f>=1)return false;
+    const shown=reduceMotion?0:f;
+    BX.strokeStyle=`rgba(255,255,255,${((1-shown)*.55).toFixed(3)})`;BX.lineWidth=1;
+    BX.beginPath();BX.arc(p.x,p.y,p.r+shown*2.8,0,Math.PI*2);BX.stroke();
     return true;
-  });
+  };
+  if(reduceMotion)o.pops.forEach(drawPop);
+  else o.pops=o.pops.filter(drawPop);
   BX.restore();
-  // hơi bốc lên khi sôi
+  // Hơi nước dạng plume mảnh, nở dần khi đi lên thay cho các đốm tròn đặc.
   if(o.boil&&o.vol>0.05){
     for(let i=0;i<3;i++){
-      const ph=((t*0.5+i*0.33)%1);
-      BX.fillStyle=`rgba(220,225,240,${(0.16*(1-ph)).toFixed(3)})`;
-      BX.beginPath();
-      BX.arc(o.x+Math.sin(t*1.4+i)*9,top-10-ph*34,5+ph*11,0,Math.PI*2);BX.fill();
+      const ph=((motionT*.5+i*.33)%1);
+      const x=o.x+Math.sin(motionT*1.4+i)*7,y=top-7-ph*40;
+      BX.strokeStyle=pal("vapour",.16*(1-ph));BX.lineWidth=1.4+ph*2.4;BX.lineCap="round";
+      BX.beginPath();BX.moveTo(x,top-5);
+      BX.bezierCurveTo(x-8,top-16,x+9,y+12,x+Math.sin(motionT+i)*5,y);BX.stroke();
     }
   }
 }
@@ -2641,39 +3221,58 @@ function glassStroke(o){
   const g=GEAR[o.type];
   BX.save();vesselShape(o,BX,0);BX.clip();
   const gl=BX.createLinearGradient(o.x-g.w/2,0,o.x+g.w/2,0);
-  gl.addColorStop(0,fg(.13));gl.addColorStop(.13,fg(.05));
-  gl.addColorStop(.30,fg(.015));
-  gl.addColorStop(.80,fg(0));gl.addColorStop(1,fg(.10));
+  gl.addColorStop(0,pal("glass",.16));gl.addColorStop(.10,pal("glass",.055));
+  gl.addColorStop(.24,pal("glass",.012));gl.addColorStop(.58,pal("glass",.035));
+  gl.addColorStop(.82,pal("glass",.008));gl.addColorStop(1,pal("glass",.13));
   BX.fillStyle=gl;BX.fillRect(o.x-g.w/2,o.y-g.h,g.w,g.h);
-  // vệt sáng dọc đặc trưng của thủy tinh
-  BX.fillStyle=fg(.15);
-  BX.beginPath();BX.roundRect(o.x-g.w/2+g.w*0.16,o.y-g.h+8,3.2,g.h*0.62,2);BX.fill();
+  // Hai vệt phản xạ không đối xứng cho cảm giác thành borosilicate cong.
+  BX.fillStyle=pal("glass",.18);
+  BX.beginPath();BX.roundRect(o.x-g.w/2+g.w*0.15,o.y-g.h+9,2.8,g.h*0.58,2);BX.fill();
+  BX.fillStyle=pal("glass",.07);
+  BX.beginPath();BX.roundRect(o.x+g.w*0.27,o.y-g.h+14,1.4,g.h*0.39,1);BX.fill();
   BX.restore();
-  BX.strokeStyle=fg(.42);BX.lineWidth=1.9;BX.lineJoin="round";
+  BX.strokeStyle=pal("glassEdge",.72);BX.lineWidth=1.8;BX.lineJoin="round";
   vesselShape(o,BX,0);BX.stroke();
+  // Thành trong và đáy dày hơn mép thân.
+  BX.strokeStyle=pal("glassEdge",.24);BX.lineWidth=.9;
+  vesselShape(o,BX,2.6);BX.stroke();
+  BX.strokeStyle=pal("glassEdge",.32);BX.lineWidth=2.2;
+  BX.beginPath();BX.moveTo(o.x-g.w*.32,o.y-3);BX.quadraticCurveTo(o.x,o.y,o.x+g.w*.32,o.y-3);BX.stroke();
   // miệng bình: vành ellipse cho cảm giác khối
   if(["beaker","cylinder","tube","burette"].includes(o.type)){
-    BX.strokeStyle=fg(.5);BX.lineWidth=1.5;
+    BX.strokeStyle=pal("glassEdge",.78);BX.lineWidth=1.5;
     BX.beginPath();BX.ellipse(o.x,o.y-g.h,g.w/2,g.w*0.16,0,0,Math.PI*2);BX.stroke();
+    BX.strokeStyle=pal("glassEdge",.28);BX.lineWidth=.8;
+    BX.beginPath();BX.ellipse(o.x,o.y-g.h+1.6,g.w/2-2,g.w*0.13,0,0,Math.PI*2);BX.stroke();
   }
   if(o.type==="flask"||o.type==="rflask"){
     const nw=g.w*(o.type==="flask"?0.30:0.28);
-    BX.strokeStyle=fg(.5);BX.lineWidth=1.5;
+    BX.strokeStyle=pal("glassEdge",.75);BX.lineWidth=1.5;
     BX.beginPath();BX.ellipse(o.x,o.y-g.h,nw/2,nw*0.2,0,0,Math.PI*2);BX.stroke();
   }
 }
 function drawGraduations(o){
   const g=GEAR[o.type];
   if(!["beaker","cylinder","burette","tube"].includes(o.type))return;
-  BX.strokeStyle=fg(.24);BX.lineWidth=1;
-  BX.fillStyle=fg(.34);BX.font="500 7px 'JetBrains Mono', monospace";BX.textAlign="right";
-  const n=o.type==="burette"?10:4;
-  for(let k=1;k<=n;k++){
-    const f=k/n;
-    const y=liqTopOf({...o,vol:o.cap*f});
-    const x2=o.x+g.w/2-3,len=(k%2===0||o.type==="burette")?11:7;
+  const cfg={
+    beaker:{minor:25,major:50,max:o.cap-25,label:"xấp xỉ"},
+    cylinder:{minor:2,major:10,max:o.cap},
+    tube:{minor:5,major:10,max:o.cap-5},
+    burette:{minor:1,major:5,max:o.cap,reverse:true}
+  }[o.type];
+  BX.strokeStyle=fg(.28);BX.lineWidth=.85;
+  BX.fillStyle=fg(.40);BX.font="500 6.5px 'JetBrains Mono', monospace";BX.textAlign="right";
+  for(let v=cfg.minor;v<=cfg.max+1e-9;v+=cfg.minor){
+    const remaining=cfg.reverse?o.cap-v:v;
+    const y=liqTopOf({...o,vol:remaining});
+    const major=Math.abs(v/cfg.major-Math.round(v/cfg.major))<1e-8;
+    const x2=o.x+g.w/2-3,len=major?Math.min(13,g.w*.38):Math.min(7,g.w*.22);
     BX.beginPath();BX.moveTo(x2-len,y);BX.lineTo(x2,y);BX.stroke();
-    if(k%2===0&&o.type!=="tube")BX.fillText(Math.round(o.cap*f),x2-len-2,y+2.5);
+    if(major&&o.type!=="tube")BX.fillText(Math.round(v),x2-len-2,y+2.3);
+  }
+  if(cfg.label){
+    BX.fillStyle=fg(.26);BX.font="500 5.8px Figtree, sans-serif";BX.textAlign="center";
+    BX.fillText(cfg.label,o.x,o.y-g.h*.16);
   }
 }
 function drawVessel(o,t){
@@ -2682,16 +3281,23 @@ function drawVessel(o,t){
   drawGraduations(o);
   const g=GEAR[o.type];
   if(o.type==="beaker"){    // mỏ rót
-    BX.strokeStyle=fg(.38);BX.lineWidth=1.9;
-    BX.beginPath();BX.moveTo(o.x-g.w/2,o.y-g.h);
-    BX.lineTo(o.x-g.w/2-7,o.y-g.h-4);BX.stroke();
+    BX.strokeStyle=pal("glassEdge",.70);BX.lineWidth=1.7;BX.lineJoin="round";
+    BX.beginPath();BX.moveTo(o.x-g.w/2+4,o.y-g.h+1);
+    BX.quadraticCurveTo(o.x-g.w/2-2,o.y-g.h,o.x-g.w/2-8,o.y-g.h-5);
+    BX.quadraticCurveTo(o.x-g.w/2-2,o.y-g.h-3,o.x-g.w/2+5,o.y-g.h-2);BX.stroke();
   }
   if(o.type==="burette"){   // khoá buret
-    BX.fillStyle=fg(.20);BX.strokeStyle=fg(.45);BX.lineWidth=1.4;
+    BX.fillStyle=pal("metal",.32);BX.strokeStyle=pal("metalHi",.66);BX.lineWidth=1.4;
     BX.beginPath();BX.ellipse(o.x,o.y-26,9,5.5,0,0,Math.PI*2);BX.fill();BX.stroke();
+    BX.beginPath();BX.moveTo(o.x-14,o.y-26);BX.lineTo(o.x+14,o.y-26);BX.stroke();
+    BX.fillStyle=pal("metalHi",.64);BX.beginPath();BX.arc(o.x+14,o.y-26,2.6,0,Math.PI*2);BX.fill();
+  }
+  if(["beaker","flask","rflask","cylinder"].includes(o.type)){
+    BX.fillStyle=fg(.24);BX.font="500 6.4px 'JetBrains Mono', monospace";BX.textAlign="center";
+    BX.fillText(`${g.cap} mL`,o.x,o.y-9);
   }
   if(o.temp>26){            // nhãn nhiệt độ
-    BX.fillStyle=o.temp>=99?"#E5A13A":fg(.55);
+    BX.fillStyle=o.temp>=99?pal("heat"):fg(.55);
     BX.font="500 9px 'JetBrains Mono', monospace";BX.textAlign="center";
     BX.fillText(Math.round(o.temp)+"°C",o.x,o.y-g.h-8);
   }
@@ -2724,7 +3330,7 @@ function drawLamp(o,t){
     }
     if(!tint){                                  // ngọn lửa thường khi không có que thử
     const halo=BX.createRadialGradient(x,y-g.h-14,3,x,y-g.h-14,58);
-    halo.addColorStop(0,"rgba(255,180,80,.24)");halo.addColorStop(1,"rgba(255,140,40,0)");
+    halo.addColorStop(0,pal("heat",.24));halo.addColorStop(1,pal("heat",0));
     BX.fillStyle=halo;BX.beginPath();BX.arc(x,y-g.h-14,58,0,Math.PI*2);BX.fill();
     const flame=(w,h,dy,c0,c1)=>{
       const gr=BX.createRadialGradient(x,y-g.h-dy-h*0.30,1,x,y-g.h-dy-h*0.30,h*0.8);
@@ -2736,15 +3342,15 @@ function drawLamp(o,t){
       BX.quadraticCurveTo(x+w*1.05,y-g.h-h*0.55,x+w,y-g.h+2);
       BX.closePath();BX.fill();
     };
-    flame(13,fh,0,"rgba(255,196,96,.85)","rgba(255,110,30,0)");
-    flame(8,fh*0.66,2,"rgba(255,240,190,.95)","rgba(255,190,90,.10)");
-    flame(4.2,fh*0.34,1,"rgba(170,205,255,.80)","rgba(120,170,255,0)");
+    flame(13,fh,0,pal("heat",.85),pal("heat",0));
+    flame(8,fh*0.66,2,pal("heatCore",.95),pal("heat",.10));
+    flame(4.2,fh*0.34,1,pal("vapour",.80),pal("vapour",0));
     }
     // sóng nhiệt phía trên
     BX.save();BX.globalAlpha=.10;
     for(let i=0;i<3;i++){
       const ph=((t*0.6+i*0.33)%1);
-      BX.strokeStyle="rgba(255,220,180,.9)";BX.lineWidth=1.4;
+      BX.strokeStyle=pal("heatCore",.9);BX.lineWidth=1.4;
       BX.beginPath();
       for(let k=0;k<=8;k++){
         const yy=y-g.h-fh-8-ph*38-k*3;
@@ -2755,47 +3361,54 @@ function drawLamp(o,t){
     }
     BX.restore();
   }
-  BX.fillStyle=fg(.08);BX.strokeStyle=fg(.40);BX.lineWidth=1.8;
+  BX.fillStyle=pal("metal",.22);BX.strokeStyle=pal("metalHi",.58);BX.lineWidth=1.8;
   BX.beginPath();
   BX.moveTo(x-g.w/2,y);BX.lineTo(x-g.w/2+4,y-g.h+16);
   BX.lineTo(x-9,y-g.h+16);BX.lineTo(x-9,y-g.h+4);
   BX.lineTo(x+9,y-g.h+4);BX.lineTo(x+9,y-g.h+16);
   BX.lineTo(x+g.w/2-4,y-g.h+16);BX.lineTo(x+g.w/2,y);
   BX.closePath();BX.fill();BX.stroke();
-  BX.fillStyle="rgba(190,160,120,.6)";BX.fillRect(x-3,y-g.h,6,6);
+  BX.fillStyle=pal("woodEdge",.68);BX.fillRect(x-3,y-g.h,6,6);
 }
 function drawTripod(o){
   const g=GEAR[o.type],x=o.x,y=o.y,ty=y-g.top;
-  BX.strokeStyle="rgba(215,220,230,.55)";BX.lineWidth=2.6;BX.lineCap="round";
+  BX.strokeStyle=pal("metalHi",.62);BX.lineWidth=2.6;BX.lineCap="round";
   BX.beginPath();
   BX.moveTo(x-g.w/2,ty);BX.lineTo(x+g.w/2,ty);
   BX.moveTo(x-g.w/2+8,ty);BX.lineTo(x-g.w/2+16,y);
   BX.moveTo(x+g.w/2-8,ty);BX.lineTo(x+g.w/2-16,y);
   BX.moveTo(x,ty);BX.lineTo(x,y);
   BX.stroke();
-  BX.fillStyle="rgba(210,205,195,.30)";BX.strokeStyle="rgba(220,215,205,.45)";BX.lineWidth=1.2;
+  BX.fillStyle=pal("metal",.34);BX.strokeStyle=pal("metalHi",.52);BX.lineWidth=1.2;
   BX.beginPath();BX.rect(x-g.w/2-5,ty-5,g.w+10,5);BX.fill();BX.stroke();
   BX.strokeStyle=fg(.12);BX.lineWidth=.8;
   for(let i=-4;i<=4;i++){BX.beginPath();BX.moveTo(x+i*9,ty-5);BX.lineTo(x+i*9,ty);BX.stroke();}
 }
 function drawStand(o){
   const g=GEAR[o.type],x=o.x,y=o.y;
-  BX.fillStyle="rgba(140,146,158,.42)";BX.strokeStyle="rgba(200,206,218,.5)";BX.lineWidth=1.6;
+  const base=BX.createLinearGradient(x-g.w/2,y-10,x+g.w/2,y-10);
+  base.addColorStop(0,pal("metal",.34));base.addColorStop(.48,pal("metalHi",.54));base.addColorStop(1,pal("metal",.42));
+  BX.fillStyle=base;BX.strokeStyle=pal("metalHi",.62);BX.lineWidth=1.6;
   BX.beginPath();BX.roundRect(x-g.w/2,y-10,g.w,10,3);BX.fill();BX.stroke();
-  BX.fillStyle="rgba(170,176,188,.45)";
+  const rod=BX.createLinearGradient(x-g.w/2+8,0,x-g.w/2+15,0);
+  rod.addColorStop(0,pal("metal",.44));rod.addColorStop(.58,pal("metalHi",.62));rod.addColorStop(1,pal("metal",.38));
+  BX.fillStyle=rod;
   BX.beginPath();BX.roundRect(x-g.w/2+8,y-g.h,7,g.h-10,3);BX.fill();BX.stroke();
   const cy=y-g.top;
   BX.beginPath();BX.roundRect(x-g.w/2+8,cy-6,g.w*0.72,11,4);BX.fill();BX.stroke();
-  BX.strokeStyle="rgba(210,215,225,.6)";BX.lineWidth=2.2;
+  BX.strokeStyle=pal("metalHi",.72);BX.lineWidth=2.2;
   BX.beginPath();BX.arc(x+g.w*0.22,cy,11,Math.PI*0.72,Math.PI*2.28);BX.stroke();
 }
 function drawRack(o){
   const g=GEAR[o.type],x=o.x,y=o.y,ty=y-g.top;
-  BX.fillStyle="rgba(122,96,70,.42)";BX.strokeStyle="rgba(190,160,124,.5)";BX.lineWidth=1.5;
+  BX.fillStyle=pal("wood",.58);BX.strokeStyle=pal("woodEdge",.72);BX.lineWidth=1.5;
   BX.beginPath();BX.roundRect(x-g.w/2,ty,g.w,10,3);BX.fill();BX.stroke();
   BX.beginPath();BX.roundRect(x-g.w/2,y-8,g.w,8,3);BX.fill();BX.stroke();
   BX.beginPath();BX.roundRect(x-g.w/2+4,ty+10,6,y-8-ty-10,2);BX.fill();BX.stroke();
   BX.beginPath();BX.roundRect(x+g.w/2-10,ty+10,6,y-8-ty-10,2);BX.fill();BX.stroke();
+  BX.strokeStyle=pal("woodEdge",.34);BX.lineWidth=.8;
+  BX.beginPath();BX.moveTo(x-g.w/2+7,ty+7);BX.lineTo(x+g.w/2-7,ty+7);BX.stroke();
+  BX.beginPath();BX.moveTo(x-g.w/2+7,y-3);BX.lineTo(x+g.w/2-7,y-3);BX.stroke();
   BX.fillStyle=sh(.45);
   for(let i=0;i<4;i++){BX.beginPath();BX.ellipse(x-g.w/2+22+i*29,ty+4,10,3.4,0,0,Math.PI*2);BX.fill();}
 }
@@ -2804,14 +3417,14 @@ function drawThermo(o){
   const host=o.attach?byId(o.attach):null;
   const T=host?host.temp:25;
   const f=Math.max(0,Math.min(1,(T+10)/120));
-  BX.fillStyle=fg(.07);BX.strokeStyle=fg(.45);BX.lineWidth=1.4;
+  BX.fillStyle=pal("metal",.16);BX.strokeStyle=pal("metalHi",.62);BX.lineWidth=1.4;
   BX.beginPath();BX.roundRect(x-g.w/2,y-g.h,g.w,g.h-9,7);BX.fill();BX.stroke();
   BX.beginPath();BX.arc(x,y-6,7,0,Math.PI*2);BX.fill();BX.stroke();
-  BX.fillStyle="#E8503A";
+  BX.fillStyle=pal("reactionWarning");
   BX.beginPath();BX.arc(x,y-6,5,0,Math.PI*2);BX.fill();
   const colH=(g.h-26)*f;
   BX.fillRect(x-2,y-13-colH,4,colH+8);
-  BX.strokeStyle=fg(.3);BX.lineWidth=.8;
+  BX.strokeStyle=pal("metalHi",.42);BX.lineWidth=.8;
   for(let k=0;k<=6;k++){const yy=y-16-(g.h-26)*k/6;
     BX.beginPath();BX.moveTo(x+3,yy);BX.lineTo(x+6,yy);BX.stroke();}
   BX.fillStyle=fg(1);BX.font="500 9px 'JetBrains Mono', monospace";BX.textAlign="center";
@@ -2821,11 +3434,11 @@ function drawPh(o){
   const g=GEAR[o.type],x=o.x,y=o.y;
   const host=o.attach?byId(o.attach):null;
   const val=host&&host.vol>0?tubePh(host):null;
-  BX.fillStyle=fg(.06);BX.strokeStyle=fg(.42);BX.lineWidth=1.4;
+  BX.fillStyle=pal("metal",.14);BX.strokeStyle=pal("metalHi",.60);BX.lineWidth=1.4;
   BX.beginPath();BX.roundRect(x-g.w/2,y-g.h+30,g.w,g.h-30,4);BX.fill();BX.stroke();
   BX.beginPath();BX.roundRect(x-16,y-g.h,32,30,4);BX.fill();BX.stroke();
-  BX.fillStyle="rgba(40,180,160,.20)";BX.fillRect(x-13,y-g.h+4,26,16);
-  BX.fillStyle=val===null?fg(.38):"#35C47A";
+  BX.fillStyle=pal("instrument",.20);BX.fillRect(x-13,y-g.h+4,26,16);
+  BX.fillStyle=val===null?fg(.38):pal("instrument");
   BX.font="600 11px 'JetBrains Mono', monospace";BX.textAlign="center";
   BX.fillText(val===null?"--.-":val.toFixed(2),x,y-g.h+16);
   BX.fillStyle=fg(.3);BX.font="500 6px Figtree, sans-serif";
@@ -3040,20 +3653,36 @@ let dragItem=null,dragOff={x:0,y:0},hoverTarget=null,pourFx=null;
 function paintItem(o,t){
   const g=GEAR[o.type];
   if(hoverTarget===o.id){
-    BX.save();BX.strokeStyle="rgba(168,123,224,.85)";BX.lineWidth=2;
+    BX.save();BX.strokeStyle=pal("selection",.85);BX.lineWidth=2;
     BX.setLineDash([6,5]);BX.lineDashOffset=-t*22;
     BX.beginPath();BX.roundRect(o.x-g.w/2-8,o.y-g.h-12,g.w+16,g.h+20,10);BX.stroke();BX.restore();
   }
   if(selId===o.id){
     BX.save();
-    BX.shadowColor="rgba(129,74,200,.75)";BX.shadowBlur=16;
-    BX.strokeStyle="rgba(168,123,224,.55)";BX.lineWidth=1.4;
+    BX.shadowColor=pal("selection",.75);BX.shadowBlur=16;
+    BX.strokeStyle=pal("selection",.55);BX.lineWidth=1.4;
     BX.beginPath();BX.roundRect(o.x-g.w/2-6,o.y-g.h-9,g.w+12,g.h+15,8);BX.stroke();BX.restore();
   }
   (DRAW[o.type]||drawVessel)(o,t);
 }
+function drawReactionBadge(o,now){
+  const b=o.reactionBadge;
+  if(!b||(!reduceMotion&&now>=b.until)||o.kind!=="vessel")return;
+  const left=Math.max(0,b.until-now),fade=reduceMotion?1:Math.min(1,left/420);
+  const g=GEAR[o.type],text=b.text;
+  BX.save();BX.globalAlpha=fade;
+  BX.font="600 9px Figtree, sans-serif";
+  const w=Math.max(44,BX.measureText(text).width+18),h=23;
+  const x=Math.max(w/2+6,Math.min(BW-w/2-6,o.x));
+  const y=Math.max(10,o.y-g.h-38);
+  BX.fillStyle=PANEL();
+  BX.strokeStyle=b.kind==="gas"?pal("reactionGas"):b.kind==="precip"?pal("reactionSuccess"):pal("reactionWarning");
+  BX.lineWidth=1.2;BX.beginPath();BX.roundRect(x-w/2,y,w,h,11);BX.fill();BX.stroke();
+  BX.fillStyle=fg(.88);BX.textAlign="center";BX.textBaseline="middle";
+  BX.fillText(text,x,y+h/2+.5);BX.restore();
+}
 function drawBench(now){
-  const t=now/1000;
+  const t=reduceMotion?0:now/1000;
   BX.clearRect(0,0,BW,BH);
   drawRoom(t);
   if(!BENCH.length){
@@ -3087,8 +3716,8 @@ function drawBench(now){
   drawLinks(t);
   items.forEach(o=>paintItem(o,t));
   if(pourFx){
-    pourFx.t+=0.022;
-    if(pourFx.t>=1)pourFx=null;
+    if(!reduceMotion)pourFx.t+=.022;
+    if(!reduceMotion&&pourFx.t>=1)pourFx=null;
     else{
       const a=byId(pourFx.from),b=byId(pourFx.to);
       if(a&&b){
@@ -3106,6 +3735,7 @@ function drawBench(now){
     }
   }
   drawVignette();
+  items.forEach(o=>drawReactionBadge(o,now));
   requestAnimationFrame(drawBench);
 }
 
@@ -3143,13 +3773,14 @@ function gasTick(){
   BENCH.filter(o=>o.kind==="link"&&o.from&&o.to).forEach(l=>{
     const a=byId(l.from),b=byId(l.to);
     if(!a||!b||!(a.co2>1e-9))return;
-    const step=Math.min(a.co2,0.00035);
-    const oh=ionOf(b,"OH");
-    if(oh<2*step){a.co2=Math.max(0,a.co2-step);return;}   // không có kiềm thì khí thoát ra ngoài
-    a.co2-=step;
-    b.ions.OH-=2*step;
-    addIon(b,"CO3",step);
-    b.bubs.push({x:b.x+(Math.random()-.5)*20,y:b.y-8,vy:.5+Math.random()*.5,r:1.4+Math.random()*1.8});
+    const step=Math.min(a.co2,0.00035),oh=ionOf(b,"OH");
+    const captured=Math.min(step,oh/2);
+    a.co2=Math.max(0,a.co2-step);                         // phần không hấp thụ thoát ra ngoài
+    if(captured<=1e-12)return;
+    b.ions.OH-=2*captured;
+    addIon(b,"CO3",captured);
+    markReaction(b,"↑ CO₂ · đang hấp thụ","gas");
+    cadenceBenchBubble(b,performance.now(),"gas");
     const before=b.precip.length;
     react(b);
     if(b.precip.length>before){
@@ -3169,44 +3800,116 @@ function drawGasTube(o){
   BX.restore();
 }
 
-/* ---- vật lý: đun nóng, sôi, bay hơi ---- */
+/* ---- vật lý: đun nóng, sôi, bay hơi ----
+   State time is intentionally accelerated for the interactive lab. All
+   energy terms are integrated in joules using this explicit simulation scale;
+   reduced-motion changes rendering only, never state advancement. */
+const THERMAL_SIM_TIME_SCALE=8;
+const THERMAL_HEATER_POWER_W=90;
+const THERMAL_LOSS_UA_W_PER_K=0.22;
+const THERMAL_WATER_CP_J_PER_GK=4.18;
+const THERMAL_GLASS_CP_J_PER_GK=0.84;
+const THERMAL_LATENT_HEAT_J_PER_G=2257;
+const THERMAL_KSP_CADENCE_S=0.5;
+
+function thermalLampInFlame(v,bench){
+  return bench.find(l=>l.type==="lamp"&&l.lit&&
+    Math.abs(l.x-v.x)<=52&&v.y<=l.y+4&&l.y-v.y<150)||null;
+}
+function thermalApparatusState(v,bench){
+  const lamp=thermalLampInFlame(v,bench);
+  if(!lamp)return{heated:false,reason:"no-flame",lamp:null,tripod:null,holder:null};
+  if(v.type==="burette"||v.type==="cylinder")
+    return{heated:false,reason:"unsafe-glassware",lamp,tripod:null,holder:null};
+  if(v.type==="tube"){
+    const holder=bench.find(h=>h.type==="holder"&&h.attach===v.id)||null;
+    return{heated:!!holder,reason:holder?"direct-tube":"tube-holder-required",lamp,tripod:null,holder};
+  }
+  if(["beaker","flask","rflask"].includes(v.type)){
+    const tripod=v.on?bench.find(s=>s.id===v.on&&s.type==="tripod"):null;
+    const aligned=!!tripod&&Math.abs(lamp.x-tripod.x)<=GEAR.tripod.w*.55&&
+      Math.abs(lamp.y-tripod.y)<=30;
+    return{heated:aligned,reason:aligned?"tripod-and-flame":"tripod-required",lamp,tripod:aligned?tripod:null,holder:null};
+  }
+  return{heated:false,reason:"unsupported-vessel",lamp,tripod:null,holder:null};
+}
+function thermalDissolvedMassG(v){
+  let m=0;
+  Object.keys(v.ions||{}).forEach(k=>{if(ION[k])m+=(v.ions[k]||0)*ION[k].M;});
+  m+=(v.weakA||0)*60.05+(v.weakB||0)*17.03;
+  (v.cplx||[]).forEach(c=>{m+=(c.mol||0)*(c.M||0);});
+  return Math.max(0,m);
+}
+function thermalWaterMassG(v){return Math.max(0,(v.vol||0)-thermalDissolvedMassG(v));}
+function thermalResidueMassG(v){
+  let m=thermalDissolvedMassG(v);
+  (v.precip||[]).forEach(p=>{m+=(p.mol||0)*(p.M||0);});
+  Object.keys(v.solids||{}).forEach(k=>{if(SOLIDS[k])m+=(v.solids[k]||0)*SOLIDS[k].M;});
+  return Math.max(0,m);
+}
+function thermalHeatCapacity(v){
+  const water=thermalWaterMassG(v),dissolved=thermalDissolvedMassG(v);
+  const glass=TARE[v.type]||40;
+  return Math.max(1,water*THERMAL_WATER_CP_J_PER_GK+dissolved*1.2+glass*THERMAL_GLASS_CP_J_PER_GK);
+}
+function thermalStep(v,bench,realDt){
+  const dt=Math.min(0.25,Math.max(0,Number(realDt)||0))*THERMAL_SIM_TIME_SCALE;
+  const state=thermalApparatusState(v,bench);
+  if(!(dt>0)||v.kind!=="vessel")return{...state,dt,evaporatedMl:0};
+  if(state.lamp&&!state.heated&&!v._warned){
+    v._warned=true;
+    const message=state.reason==="unsafe-glassware"
+      ? `${GEAR[v.type].name} không được đun trực tiếp trên ngọn lửa.`
+      : state.reason==="tripod-required"
+        ? `${GEAR[v.type].name} phải đặt trên kiềng ba chân, đúng phía trên đèn cồn.`
+        : state.reason==="tube-holder-required"
+          ? "Ống nghiệm phải kẹp bằng kẹp gỗ mới hơ trực tiếp trên lửa."
+          : "Dụng cụ này không có cấu hình đun hợp lệ.";
+    toast(message,"bad","!");logRxn([`An toàn: ${message}`]);
+  }
+  if(!state.lamp)v._warned=false;
+  const hasLiquid=v.vol>0.02&&!v.dry;
+  if(hasLiquid&&!v._v0)v._v0=v.vol;
+  const ambient=25,T0=Number.isFinite(v.temp)?v.temp:ambient;
+  const capacity=thermalHeatCapacity(v);
+  const net=(state.heated?THERMAL_HEATER_POWER_W:0)-THERMAL_LOSS_UA_W_PER_K*(T0-ambient);
+  let energy=net*dt,evaporatedMl=0;
+  if(hasLiquid&&energy>0){
+    const toBoil=Math.max(0,(100-T0)*capacity);
+    if(energy<toBoil){v.temp=Math.min(100,T0+energy/capacity);}
+    else{
+      v.temp=100;
+      const water=thermalWaterMassG(v);
+      const evaporatedG=Math.min(water,Math.max(0,energy-toBoil)/THERMAL_LATENT_HEAT_J_PER_G);
+      evaporatedMl=Math.min(v.vol,evaporatedG);
+      v.vol=Math.max(0,v.vol-evaporatedMl);
+      if(evaporatedMl>0){
+        v._thermalKspElapsed=(v._thermalKspElapsed||0)+dt;
+        if(v._thermalKspElapsed>=THERMAL_KSP_CADENCE_S||v.vol<=0.02){
+          v._thermalKspElapsed=0;
+          if(typeof react==="function")react(v);
+        }
+      }
+      if(v.vol<=0.02||water<=evaporatedG+1e-9){
+        v.vol=0;v.boil=0;v.dry=true;v.dryResidueG=thermalResidueMassG(v);v._thermalKspElapsed=0;v.bubs=[];
+        note2(`${GEAR[v.type].name} đã cô cạn — còn ${fmt(v.dryResidueG,2)} g cặn rắn.`);
+      }
+    }
+  }else{
+    v.temp=Math.max(ambient,T0+Math.min(0,energy)/capacity);
+  }
+  v.boil=!!(state.heated&&v.temp>=99.5&&v.vol>0.02&&!v.dry);
+  return{...state,dt,evaporatedMl,temperatureC:v.temp,dry:!!v.dry,residueG:v.dryResidueG||0};
+}
+
 let lastTick=performance.now();
 function physicsTick(){
   const now=performance.now();
-  const dt=Math.min(0.05,(now-lastTick)/1000);lastTick=now;
+  const dt=Math.min(0.05,Math.max(0,(now-lastTick)/1000));lastTick=now;
   BENCH.forEach(o=>{
-    if(o.flash>0)o.flash-=0.02;
-    if(o.stir>0)o.stir-=0.012;
-    if(o.kind!=="vessel")return;
-    const overFlame=BENCH.some(l=>l.type==="lamp"&&l.lit&&
-      Math.abs(l.x-o.x)<52&&o.y<=l.y+4&&l.y-o.y<150);
-    // ống nghiệm phải có kẹp gỗ mới được hơ trực tiếp trên ngọn lửa
-    const clamped=BENCH.some(h=>h.type==="holder"&&h.attach===o.id);
-    const onStand=o.on&&byId(o.on);
-    const heated=overFlame&&(o.type!=="tube"||clamped||onStand);
-    if(heated&&o.vol>0&&!o._v0)o._v0=o.vol;
-    if(overFlame&&!heated&&!o._warned){
-      o._warned=true;
-      toast("Ống nghiệm phải kẹp bằng kẹp gỗ mới hơ trực tiếp trên lửa","bad","!");
-      logRxn(["An toàn: dùng <b>kẹp gỗ</b> để giữ ống nghiệm khi đun trực tiếp."]);
-    }
-    if(!overFlame)o._warned=false;
-    const mass=Math.max(4,o.vol);
-    if(heated){
-      const rate=560/mass;
-      o.temp=Math.min(100,o.temp+rate*dt);
-    }else{
-      o.temp=Math.max(25,o.temp-(o.temp-25)*0.35*dt-0.6*dt);
-    }
-    o.boil=o.temp>=99.4&&o.vol>0.05&&heated;
-    if(o.boil){                                   // sôi thì cô cạn dần
-      const ev=Math.min(o.vol,o.vol*0.030*dt+0.05*dt);
-      o.vol-=ev;
-      if(o.vol<=0.05&&o.vol>0){
-        o.vol=0;o.bubs=[];
-        note2(`Ống ${o.id} đã cô cạn — chỉ còn cặn rắn.`);
-      }
-    }
+    if(!reduceMotion&&o.flash>0)o.flash-=0.02;
+    if(!reduceMotion&&o.stir>0)o.stir-=0.012;
+    if(o.kind==="vessel")thermalStep(o,BENCH,dt);
   });
 }
 
@@ -3277,14 +3980,20 @@ function benchPt(cx,cy){
   const r=BCV.getBoundingClientRect();
   return{x:(cx-r.left)/r.width*BW,y:(cy-r.top)/r.height*BH};
 }
-function itemAt(x,y,filter){
+function itemAt(x,y,filter,minCssPx=0){
   const order=o=>({probe:0,tool:1,vessel:2,heater:3,support:4})[o.kind]??2;
+  const rect=BCV.getBoundingClientRect();
+  const minW=minCssPx&&rect.width?minCssPx*BW/rect.width:0;
+  const minH=minCssPx&&rect.height?minCssPx*BH/rect.height:0;
   const hits=BENCH.filter(o=>{
     if(filter&&!filter(o))return false;
     const g=GEAR[o.type];
-    return x>o.x-g.w/2-4&&x<o.x+g.w/2+4&&y>o.y-g.h-6&&y<o.y+6;
+    const hw=Math.max(g.w/2+4,minW/2),hh=Math.max(g.h/2+6,minH/2);
+    const cy=o.y-g.h/2;
+    o._hitDistance=Math.hypot((x-o.x)/Math.max(1,hw),(y-cy)/Math.max(1,hh));
+    return Math.abs(x-o.x)<=hw&&Math.abs(y-cy)<=hh;
   });
-  hits.sort((a,b)=>order(a)-order(b));
+  hits.sort((a,b)=>order(a)-order(b)||(a._hitDistance||0)-(b._hitDistance||0));
   return hits[0]||null;
 }
 function supportUnder(x,y){
@@ -3299,21 +4008,46 @@ function placeOnSupport(v,s){
 }
 
 /* ---- thao tác ---- */
+function transferDissolved(src,dst,frac){
+  Object.keys(src.ions||{}).forEach(k=>{
+    const mol=src.ions[k]*frac;
+    addIon(dst,k,mol);src.ions[k]-=mol;
+  });
+  const wa=(src.weakA||0)*frac,wb=(src.weakB||0)*frac;
+  dst.weakA+=wa;src.weakA-=wa;dst.weakB+=wb;src.weakB-=wb;
+  (src.cplx||[]).forEach(c=>{
+    const mol=c.mol*frac;c.mol-=mol;pushCplx(dst,c,mol);
+  });
+  src.cplx=(src.cplx||[]).filter(c=>c.mol>1e-12);
+  dst.indicator=dst.indicator||src.indicator;
+  trim(src);trim(dst);
+}
+function takePrecipFraction(src,frac){
+  const moved=[];
+  (src.precip||[]).forEach(p=>{
+    const mol=p.mol*frac;
+    p.mol-=mol;
+    if(mol>1e-12)moved.push({...p,mol});
+  });
+  src.precip=(src.precip||[]).filter(p=>p.mol>1e-12);
+  return moved;
+}
+function addPrecipRecord(dst,p){
+  const found=(dst.precip||[]).find(x=>x.f===p.f);
+  if(found)found.mol+=p.mol;else dst.precip.push({...p});
+}
 function pourBetween(a,b){
   if(a.vol<=0.02){note2(`${GEAR[a.type].name} đang rỗng.`);return;}
   const room=(b.cap||0)-b.vol;
   if(room<=0.02){note2(`${GEAR[b.type].name} đã đầy.`);return;}
-  const move=Math.min(a.vol,room);
-  const frac=move/a.vol;
+  const srcVol=a.vol,dstVol=b.vol,move=Math.min(srcVol,room);
+  const frac=move/srcVol;
+  const mixedT=(b.temp*dstVol+a.temp*move)/Math.max(1e-9,dstVol+move);
+  transferDissolved(a,b,frac);
+  takePrecipFraction(a,frac).forEach(p=>addPrecipRecord(b,p));
   b.vol+=move;
-  Object.keys(a.ions).forEach(k=>{addIon(b,k,a.ions[k]*frac);a.ions[k]*=(1-frac);});
-  b.weakA+=a.weakA*frac;a.weakA*=(1-frac);
-  b.weakB+=a.weakB*frac;a.weakB*=(1-frac);
-  a.precip.forEach(p=>{const m=p.mol*frac;p.mol-=m;
-    pushPrecip(b,[null,null,null,null,p.f,p.color,p.cname],m);});
-  a.precip=a.precip.filter(p=>p.mol>1e-12);
-  b.indicator=b.indicator||a.indicator;
-  a.vol-=move;trim(a);trim(b);
+  if(move>0){b.dry=false;b.dryResidueG=0;b._thermalKspElapsed=0;}
+  a.vol-=move;b.temp=mixedT;
   if(a.vol<=0.02){a.vol=0;a.parts=[];a.bubs=[];}
   b.stir=Math.max(b.stir,0.5);
   pourFx={from:a.id,to:b.id,t:0,col:parseColor(tubeColor(b))};
@@ -3331,28 +4065,28 @@ function filterThrough(src,fn){
   const dst=fn.attach?byId(fn.attach):null;
   if(!dst)return toast("Đặt phễu lên một bình hứng trước","bad","!");
   if(src.vol<=0.02)return toast("Bình rót đang rỗng","bad","!");
-  const room=(dst.cap||0)-dst.vol;
-  const move=Math.min(src.vol,room);
+  const room=(dst.cap||0)-dst.vol,srcVol=src.vol,dstVol=dst.vol;
+  const move=Math.min(srcVol,room);
   if(move<=0.02)return toast("Bình hứng đã đầy","bad","!");
-  const frac=move/src.vol;
+  const frac=move/srcVol;
+  const mixedT=(dst.temp*dstVol+src.temp*move)/Math.max(1e-9,dstVol+move);
+  transferDissolved(src,dst,frac);
+  const kept=takePrecipFraction(src,frac);
   dst.vol+=move;
-  Object.keys(src.ions).forEach(k=>{addIon(dst,k,src.ions[k]*frac);src.ions[k]*=(1-frac);});
-  dst.weakA+=src.weakA*frac;src.weakA*=(1-frac);
-  dst.weakB+=src.weakB*frac;src.weakB*=(1-frac);
-  dst.indicator=dst.indicator||src.indicator;
-  src.vol-=move;
-  const kept=src.precip.map(p=>({...p}));               // toàn bộ kết tủa bị giữ lại
+  dst.dry=false;dst.dryResidueG=0;dst._thermalKspElapsed=0;
+  src.vol-=move;dst.temp=mixedT;
   fn.residue=fn.residue||[];
   kept.forEach(p=>{
     const f=fn.residue.find(r=>r.f===p.f);
     if(f)f.mol+=p.mol;else fn.residue.push({...p});
   });
-  src.precip=[];src.parts=[];
+  src.parts=[];
   fn.dripT=1;dst.stir=Math.max(dst.stir,0.4);
   trim(src);trim(dst);
+  const ev=react(dst);
   const names=kept.map(p=>p.f).join(", ");
   logRxn([`Lọc qua phễu: <b>${fmt(move,1)} mL</b> dịch lọc xuống ${GEAR[dst.type].name}`+
-    (names?`, giữ lại <b>${names}</b> trên giấy lọc.`:".")]);
+    (names?`, giữ lại <b>${names}</b> trên giấy lọc.`:"."),...ev]);
   if(names)toast(`Đã tách <b>${names}</b> khỏi dung dịch`,"ok","▽");
   refreshLab();
 }
@@ -3373,6 +4107,7 @@ function linkGasTube(l){
   refreshLab();
 }
 function addReagent(v,r,ml){
+  if(!r.ind&&ml<=1e-9)return toast(`${GEAR[v.type].name} đã đầy`,"bad","!");
   if(!r.ind&&v.vol+ml>(v.cap||0)){note2(`${GEAR[v.type].name} không đủ chỗ chứa.`);return;}
   v.stir=Math.max(v.stir,0.34);
   const before=v.precip.length;
@@ -3459,7 +4194,7 @@ addEventListener("pointerup",e=>{
       }else{
         const v=itemAt(p.x,p.y,o=>o.kind==="vessel");
         const r=REAGENTS.find(x=>x.id===d.chem);
-        if(v&&r)addReagent(v,r,r.ind?0:Math.min(20,(v.cap||25)*0.12));
+        if(v&&r)addReagent(v,r,r.ind?0:Math.min(selectedDoseMl(),(v.cap||25)-v.vol));
         else toast("Thả lọ hóa chất vào một bình chứa","bad","!");
       }
     }
@@ -3522,11 +4257,13 @@ function spawnGear(type,x,y){
 }
 BCV.addEventListener("pointerdown",e=>{
   const p=benchPt(e.clientX,e.clientY);
-  const it=itemAt(p.x,p.y);
+  // Ở màn hình cảm ứng, mở rộng hit box tới ít nhất 44 CSS px; hình vẽ vẫn
+  // giữ đúng tỉ lệ nhưng ống nghiệm/buret không còn là mục tiêu 12–18 px.
+  const it=itemAt(p.x,p.y,null,e.pointerType==="touch"||innerWidth<=760?44:0);
   if(!it){selId=null;refreshLab();return;}
   selId=it.id;
   if(heldReagent&&it.kind==="vessel"){
-    addReagent(it,heldReagent,heldReagent.ind?0:Math.min(20,(it.cap||25)*0.12));
+    addReagent(it,heldReagent,heldReagent.ind?0:Math.min(selectedDoseMl(),(it.cap||25)-it.vol));
     return;
   }
   if(it.type==="lamp"){it.lit=!it.lit;note2(it.lit?"Châm đèn cồn.":"Tắt đèn cồn.");return;}
@@ -3555,14 +4292,16 @@ function dripFromBurette(ml){
   if(!target)return toast("Đặt một bình ngay dưới đầu buret","bad","!");
   const move=Math.min(ml,bu.vol,(target.cap||0)-target.vol);
   if(move<=0)return toast("Bình nhận đã đầy","bad","!");
+  const phBefore=tubePh(target);
+  const srcVol=bu.vol,dstVol=target.vol;
   const frac=move/bu.vol;
+  transferDissolved(bu,target,frac);
+  takePrecipFraction(bu,frac).forEach(p=>addPrecipRecord(target,p));
+  target.temp=(target.temp*dstVol+bu.temp*move)/Math.max(1e-9,dstVol+move);
   target.vol+=move;
-  Object.keys(bu.ions).forEach(k=>{addIon(target,k,bu.ions[k]*frac);bu.ions[k]*=(1-frac);});
-  target.weakA+=bu.weakA*frac;bu.weakA*=(1-frac);
-  target.weakB+=bu.weakB*frac;bu.weakB*=(1-frac);
+  target.dry=false;target.dryResidueG=0;target._thermalKspElapsed=0;
   bu.vol-=move;trim(bu);trim(target);
   target.stir=Math.max(target.stir,0.25);
-  const phBefore=tubePh(target);
   const ev=react(target);
   const phAfter=tubePh(target);
   logRxn([`Nhỏ <b>${fmt(move,2)} mL</b> từ buret · pH ${phBefore.toFixed(2)} → <b>${phAfter.toFixed(2)}</b>`,...ev]);
@@ -3591,7 +4330,8 @@ $("#mTare").addEventListener("click",()=>{
 $("#mEmpty").addEventListener("click",()=>{
   const s=sel();if(!s||s.kind!=="vessel")return toast("Chọn một bình trước","bad","!");
   Object.assign(s,{vol:0,ions:{},weakA:0,weakB:0,precip:[],cplx:[],gas:0,indicator:null,
-    parts:[],bubs:[],pops:[],temp:25,boil:0,co2:0,h2:0,solids:{}});
+    parts:[],bubs:[],pops:[],temp:25,boil:0,dry:false,dryResidueG:0,_thermalKspElapsed:0,co2:0,h2:0,solids:{},_v0:null,
+    gasUntil:0,reactionBadge:null});
   note2(`Đổ bỏ và tráng sạch ${GEAR[s.type].name}.`);refreshLab();
 });
 $("#mClearChem").addEventListener("click",()=>{
@@ -3600,6 +4340,7 @@ $("#mClearChem").addEventListener("click",()=>{
   setHeldReagent(null);
   toast(`Đã bỏ chọn <b>${r.f}</b> — chạm vào dụng cụ sẽ không rót thêm hóa chất`,"ok","✓");
 });
+$("#mDose").addEventListener("change",()=>setHeldReagent(heldReagent));
 $("#mDel").addEventListener("click",()=>{
   const s=sel();if(!s)return toast("Chọn một dụng cụ trước","bad","!");
   BENCH.forEach(o=>{if(o.attach===s.id)o.attach=null;if(o.on===s.id)o.on=null;});
@@ -3714,7 +4455,7 @@ function checkChem(){
   renderChemTasks(New.map(m=>m.id));
   New.forEach((m,i)=>setTimeout(()=>toast(`Hoàn thành: <b>${m.t}</b>`,"ok","✓"),i*380));
   if(New.length&&Object.keys(chemDone).length===CHEM_TASKS.length)
-    setTimeout(()=>toast("Đã hoàn thành toàn bộ 6 bài thực hành hóa học","ok","★"),New.length*380+420);
+    setTimeout(()=>toast(`Đã hoàn thành toàn bộ ${CHEM_TASKS.length} bài thực hành hóa học`,"ok","★"),New.length*380+420);
 }
 function renderChemTasks(just){
   const el=$("#chemMissions");if(!el)return;
@@ -3782,7 +4523,42 @@ function renderRxn(){
     : `<p class="rxn-empty">Chưa có thao tác nào.</p>`;
 }
 function logRxn(list){list.forEach(e=>rxnRows.unshift(e));if(rxnRows.length>16)rxnRows.length=16;}
-function refreshLab(){renderInsp();renderRxn();checkChem();}
+/* Action tray cho touch: chọn vật thể trên Canvas rồi thao tác bằng mục tiêu 44 px,
+   không buộc người dùng kéo chính xác một ống nghiệm nhỏ trên màn hình điện thoại. */
+function renderTouchActions(){
+  const el=$("#touchActions");if(!el)return;
+  const s=sel(),v=s&&s.kind==="vessel"?s:null;
+  if(!s&&!heldReagent){el.hidden=true;el.innerHTML="";return;}
+  el.hidden=false;
+  const parts=[];
+  if(v){
+    parts.push(`<div class="touch-summary">Đã chọn <b>${GEAR[v.type].name}</b> · ${fmt(v.vol,1)}/${v.cap} mL${v.vol>0?` · pH ${tubePh(v).toFixed(2)} · ${Math.round(v.temp)} °C`:" · đang rỗng"}</div>`);
+    if(heldReagent){
+      const dose=heldReagent.ind?"1 giọt":`${fmt(Math.min(selectedDoseMl(),Math.max(0,v.cap-v.vol)),1)} mL`;
+      parts.push(`<button class="touch-action primary" data-touch="pour" ${!heldReagent.ind&&v.vol>=v.cap?"disabled":""}>Rót ${dose} ${heldReagent.f}</button>`);
+      parts.push(`<button class="touch-action" data-touch="clear-reagent">Bỏ chọn ${heldReagent.f}</button>`);
+    }else{
+      parts.push(`<button class="touch-action primary" data-touch="stir">Khuấy bình</button>`);
+      parts.push(`<button class="touch-action danger" data-touch="empty">Đổ bỏ & tráng</button>`);
+    }
+  }else{
+    parts.push(`<div class="touch-summary">${s?`Đã chọn <b>${GEAR[s.type].name}</b>.`:`Đang cầm <b>${heldReagent.f}</b> — chạm vào một bình để chọn.`}</div>`);
+    if(heldReagent)parts.push(`<button class="touch-action" data-touch="clear-reagent">Bỏ chọn ${heldReagent.f}</button>`);
+  }
+  if(s)parts.push(`<button class="touch-action" data-touch="deselect">Bỏ chọn dụng cụ</button>`);
+  el.innerHTML=parts.join("");
+  el.querySelectorAll("[data-touch]").forEach(b=>b.addEventListener("click",()=>{
+    const action=b.dataset.touch,current=sel();
+    if(action==="pour"&&current&&current.kind==="vessel"&&heldReagent){
+      const dose=heldReagent.ind?0:Math.min(selectedDoseMl(),Math.max(0,current.cap-current.vol));
+      addReagent(current,heldReagent,dose);
+    }else if(action==="clear-reagent")$("#mClearChem").click();
+    else if(action==="stir")$("#mStir").click();
+    else if(action==="empty")$("#mEmpty").click();
+    else if(action==="deselect"){selId=null;refreshLab();}
+  }));
+}
+function refreshLab(){renderInsp();renderRxn();checkChem();renderTouchActions();}
 
 /* cảnh mở đầu: một phép thử nhận biết ion clorua đã làm sẵn trên giá */
 if(hasChem)(function seedBench(){
@@ -3832,22 +4608,31 @@ function spawnPrecip(v,color,mol){
   const rgb=parseColor(color);
   const now=performance.now();
   const top=liqTopOf(v);
+  const event=nextBenchFxEvent(v);
   for(let k=0;k<n;k++){
+    const seed=benchFxSeed(v,event,k,1);
     v.parts.push({
-      x:v.x+(Math.random()-.5)*(g.w-16),
-      y:top+6+Math.random()*Math.max(12,(v.y-top)*0.5),
-      vy:.12+Math.random()*.32,
-      r:1.2+Math.random()*1.5,
+      x:v.x+(benchFxRand(seed,0)-.5)*(g.w-16),
+      y:top+6+benchFxRand(seed,1)*Math.max(12,(v.y-top)*.5),
+      vy:.12+benchFxRand(seed,2)*.32,
+      r:1.2+benchFxRand(seed,3)*1.5,
       col:rgb,rest:null,
-      born:now+(reduceMotion?0:Math.random()*620)
+      born:now+(reduceMotion?0:benchFxRand(seed,4)*620),
+      fxSeed:seed,settleJitter:benchFxRand(seed,5)*3,
+      lift:1.4+benchFxRand(seed,6),drift:benchFxRand(seed,7)-.5,
+      phase:benchFxRand(seed,8)*Math.PI*2
     });
   }
   v.flash=1;
   v.sparks=v.sparks||[];
-  for(let k=0;k<10;k++)v.sparks.push({          // tia lóe lúc kết tủa vừa xuất hiện
-    x:v.x+(Math.random()-.5)*(g.w-12),
-    y:top+8+Math.random()*22,
-    r:0.8+Math.random()*1.4,a:1});
+  for(let k=0;k<10;k++){
+    const seed=benchFxSeed(v,event,k,2);
+    v.sparks.push({                              // tia lóe lúc kết tủa vừa xuất hiện
+      x:v.x+(benchFxRand(seed,0)-.5)*(g.w-12),y:top+8+benchFxRand(seed,1)*22,
+      r:.8+benchFxRand(seed,2)*1.4,rise:5+benchFxRand(seed,3)*7,
+      t0:now,life:reduceMotion?1:210+benchFxRand(seed,4)*150
+    });
+  }
 }
 
 /* ============================================================
@@ -3917,7 +4702,7 @@ const MATS={
     n:3,Q:60,k0:1.47e10,Qc:55,kc0:2e6,Qd:50,kd0:1e5,Tmax:150,decomp:150,defFloor:0.08,
     app:"Pin mặt trời thế hệ mới",rho:1e7,
     anchor:"100 °C/1 h: 20 → 60 nm, phân hủy trên 150 °C",
-    methods:["spin","hydro"]},
+    methods:["spin"]},
   Gr:{name:"Graphit",sym:"C",start:"Gr",family:"Vật liệu carbon",device:"battery",
     n:4,Q:340,k0:1.81e12,Qc:280,kc0:2e9,Qd:260,kd0:1e8,Tmax:2600,
     app:"Cực âm pin Li-ion, tiền chất graphene",rho:1e-3,
@@ -4937,23 +5722,110 @@ const PRECURSOR={
   Si:{solgel:"TEOS Si(OC₂H₅)₄",cvd:"SiH₄",cz:"Si đa tinh thể 11N",mill:"Bột Si"},
   GaAs:{cvd:"TMGa + AsH₃",mbe:"Ga và As nguyên tố 7N"},
   TiO2:{solgel:"TTIP Ti(OC₃H₇)₄",hydro:"TiCl₄ / TiOSO₄",mill:"Bột TiO₂ thô"},
-  ZnO:{solgel:"Zn(CH₃COO)₂·2H₂O",hydro:"Zn(NO₃)₂·6H₂O",cvd:"Dietylzinc + O₂"},
-  MAPI:{spin:"PbI₂ + CH₃NH₃I trong DMF",hydro:"PbI₂ + CH₃NH₃I trong γ-butyrolactone"},
+  ZnO:{solgel:"Zn(CH₃COO)₂·2H₂O + MEA trong 2-methoxyethanol",hydro:"Zn(NO₃)₂·6H₂O",cvd:"Dietylzinc + O₂"},
+  MAPI:{spin:"PbI₂ + CH₃NH₃I trong DMF"},
   Gr:{cvd:"CH₄ trên lá đồng",mill:"Graphit vảy"}
 };
-/* Antoine cho nước (NIST, 379–573 K): log₁₀(P/bar) = A − B/(T+C) */
+/*
+   Áp suất hơi bão hòa nước theo IAPWS/Wagner (273,15 K ≤ T < T_c).
+   P_c = 22,064 MPa; kết quả trả về bar. Không dùng phép nội suy Antoine
+   ngoài miền đã nêu và không nhân áp suất hơi với hệ số điền đầy.
+*/
 function pSatWater(TC){
-  const T=TC+273.15;
-  return Math.pow(10,5.0768-1659.793/(T-45.854));
+  const Tc=647.096, PcBar=220.64;
+  const T=Math.max(273.15,Math.min(Tc-1e-6,Number(TC)+273.15));
+  const tau=1-T/Tc;
+  const a=[-7.85951783,1.84408259,-11.7866497,22.6807411,-15.9618719,1.80122502];
+  const lnPr=(Tc/T)*(a[0]*tau+a[1]*Math.pow(tau,1.5)+a[2]*Math.pow(tau,3)
+    +a[3]*Math.pow(tau,3.5)+a[4]*Math.pow(tau,4)+a[5]*Math.pow(tau,7.5));
+  return PcBar*Math.exp(lnPr);
+}
+/* Khối lượng riêng nước lỏng bão hòa theo IAPWS SR1-86 (kg·m⁻³).
+   Dùng để đổi fill ở 25 °C sang fill nóng; đây mới là cơ chế làm headspace
+   co lại, thay vì nhân trực tiếp vapor pressure với hệ số điền đầy. */
+function saturatedWaterDensity(TC){
+  const Tc=647.096,rhoc=322;
+  const T=Math.max(273.15,Math.min(Tc-1e-6,Number(TC)+273.15));
+  const tau=1-T/Tc;
+  return rhoc*(1+1.99274064*Math.pow(tau,1/3)+1.09965342*Math.pow(tau,2/3)
+    -0.510839303*Math.pow(tau,5/3)-1.75493479*Math.pow(tau,16/3)
+    -45.5170352*Math.pow(tau,43/3)-6.74694450e5*Math.pow(tau,110/3));
+}
+/*
+   Mô hình pressure tổng trong autoclave: hơi nước bão hòa + khí không ngưng.
+   Bình được đóng ở 25 °C, 1,01325 bar. Số mol không khí vì vậy tỉ lệ với
+   headspace ban đầu; ở nhiệt độ đặt, thể tích nước tăng theo density IAPWS.
+   Kết quả là fill chỉ tác động qua headspace nóng, không scale pSat(T).
+*/
+function autoclavePressure(TC,fillPct){
+  const T=Math.max(273.15,Number(TC)+273.15),fill=Math.max(5,Math.min(95,Number(fillPct)||70));
+  const vapor=pSatWater(TC),rho25=saturatedWaterDensity(25),rhoHot=saturatedWaterDensity(TC);
+  const coldFill=fill/100,hotFill=coldFill*rho25/rhoHot;
+  const headspace=1-hotFill,unsafe=headspace<0.05;
+  // Chặn mẫu số để UI vẫn hữu hạn khi liquid thermal expansion lấp đầy bình.
+  const effectiveHeadspace=Math.max(0.01,headspace);
+  const noncond=1.01325*(T/298.15)*(1-coldFill)/effectiveHeadspace;
+  return{vapor,noncond,total:vapor+noncond,headspacePct:Math.max(0,headspace*100),
+    hotFillPct:hotFill*100,unsafe};
+}
+
+/* Khối lượng mol và hệ số oxide lý thuyết theo đúng precursor đang hiển thị. */
+const SOLGEL_SPECS={
+  TiO2:{name:"TTIP",mw:284.22,oxide:"TiO₂",oxideMW:79.866,oxideMassPerPrecursor:79.866/284.22},
+  ZnO:{name:"zinc acetate dihydrate",mw:219.50,oxide:"ZnO",oxideMW:81.38,oxideMassPerPrecursor:81.38/219.50,
+    ligand:"monoethanolamine (MEA)",solvent:"2-methoxyethanol",targetRatio:1,targetConcentration:0.5},
+  Si:{name:"TEOS",mw:208.33,oxide:"SiO₂",oxideMW:60.084,oxideMassPerPrecursor:60.084/208.33}
+};
+function solgelSpec(mat){return SOLGEL_SPECS[mat]||SOLGEL_SPECS.TiO2;}
+function solgelYield(p,mat){
+  const spec=solgelSpec(mat),h=Number(p.h)||4,pH=Number(p.pH)||2;
+  const U=Math.max(0.3,Math.min(1,1-Math.abs(Math.log10(h/6))*0.45-(pH-1)*0.06));
+  const conversion=Math.max(0.55,Math.min(0.99,0.78+0.10*U+(p.dry>=100?0.05:0)-Math.max(0,2-h)*0.025));
+  const handling=Math.max(0.70,Math.min(0.98,0.95-0.08*(1-U)-(p.dry<90?0.08:0)));
+  const theoretical=Number(p.m||0)*spec.oxideMassPerPrecursor;
+  return{spec,U,conversion,handling,theoretical,yield:theoretical*conversion*handling};
+}
+function znoSolgelMetrics(p){
+  const spec=SOLGEL_SPECS.ZnO;
+  const m=Math.max(0,Number(p.m)||0),solv=Math.max(1e-9,Number(p.solv)||1);
+  const ratio=Math.max(0,Number(p.ratio)||spec.targetRatio),c=m*1000/(spec.mw*solv);
+  const T=Number(p.T)||60,stir=Math.max(0,Number(p.stir)||0),age=Math.max(0,Number(p.age)||0),dry=Number(p.dry)||100;
+  const gaussian=(x,opt,width)=>Math.exp(-0.5*Math.pow((x-opt)/width,2));
+  const ratioFit=gaussian(ratio,spec.targetRatio,0.18);
+  const concentrationFit=gaussian(c,spec.targetConcentration,0.18);
+  const temperatureFit=gaussian(T,60,18);
+  const stirringFit=gaussian(stir,2,1.0);
+  const agingFit=1-Math.exp(-age/10);
+  const dryingFit=1-Math.exp(-Math.max(0,dry-60)/28);
+  const processFit=Math.pow(ratioFit*concentrationFit*temperatureFit*stirringFit,0.25);
+  const conversion=Math.max(0.2,Math.min(0.98,0.35+0.55*processFit+0.08*agingFit+0.05*dryingFit));
+  const uniformity=Math.max(0.1,Math.min(0.98,0.15+0.78*processFit+0.07*agingFit+0.05*dryingFit));
+  const handling=Math.max(0.65,Math.min(0.96,0.70+0.24*dryingFit));
+  const theoretical=m*spec.oxideMassPerPrecursor;
+  const recovered=theoretical*conversion*handling;
+  const D=Math.max(3,8+8*Math.pow(Math.max(c,0.05)/spec.targetConcentration,0.32)
+    +7*(1-concentrationFit)+4*(1-ratioFit)+3*(1-temperatureFit)+0.14*Math.sqrt(age)
+    +3*(1-stirringFit)+2*(1-dryingFit));
+  const cryst=Math.max(0.05,Math.min(0.70,0.14+0.34*conversion+0.12*dryingFit));
+  const def=Math.max(0.04,Math.min(0.90,0.06+0.30*(1-uniformity)+0.12*(1-ratioFit)+0.05*(1-dryingFit)));
+  return{spec,m,solv,ratio,concentrationM:c,temperatureC:T,stir_h:stir,age_h:age,dry_C:dry,
+    ratioFit,concentrationFit,temperatureFit,stirringFit,agingFit,dryingFit,conversion,uniformity,handling,
+    theoretical,recovered,yield:recovered,D,cryst,def,
+    extra:[["Tiền chất","zinc acetate dihydrate + monoethanolamine (MEA)"],
+      ["Dung môi",`${fmt(solv,0)} mL 2-methoxyethanol · ${fmt(c,3)} M`],
+      ["Tỉ lệ MEA / Zn acetate",`${fmt(ratio,2)}:1`],
+      ["Chuyển hóa × handling",`${(conversion*100).toFixed(0)}% × ${(handling*100).toFixed(0)}%`],
+      ["ZnO lý thuyết → thu hồi",`${fmt(theoretical,2)} → ${fmt(recovered,2)} g`],
+      ["Độ đồng đều",`${(uniformity*100).toFixed(0)}%`]]};
 }
 const RECIPES={
   solgel:{
     title:"Sol–gel",
     steps:[
       {k:"m",ms:1500,label:"Khối lượng tiền chất",unit:"g",min:1,max:20,step:0.5,def:5,
-       note:p=>`Cho khoảng ${fmt(p.m*0.28,2)} g oxit sau khi nung.`},
+       note:(p,ctx)=>{const y=solgelYield(p,ctx&&ctx.mat);return `Lý thuyết ${y.spec.oxide}: ${fmt(y.theoretical,2)} g · dự kiến thu ${fmt(y.yield,2)} g.`;}},
       {k:"solv",ms:1900,label:"Thể tích dung môi (etanol)",unit:"mL",min:10,max:200,step:5,def:60,
-       note:p=>`Nồng độ tiền chất ${fmt(p.m/p.solv*1000/300,3)} M — loãng thì hạt nhỏ và đều hơn.`},
+       note:(p,ctx)=>{const s=solgelSpec(ctx&&ctx.mat);return `Nồng độ kim loại tiền chất ${fmt(p.m/p.solv*1000/s.mw,3)} M — loãng thì hạt nhỏ và đều hơn.`;}},
       {k:"h",ms:2200,label:"Tỉ lệ thủy phân h = n(H₂O)/n(tiền chất)",unit:"",min:1,max:20,step:0.5,def:4,
        note:p=>p.h<4?"h thấp: thủy phân chậm, gel dạng polime, hạt rất mịn."
          :p.h<10?"h trung bình: cân bằng giữa thủy phân và ngưng tụ."
@@ -4966,13 +5838,40 @@ const RECIPES={
       {k:"dry",ms:2400,label:"Nhiệt độ sấy khô",unit:"°C",min:60,max:150,step:5,def:100,
        note:p=>p.dry>=100?"Trên 100 °C bay hết dung môi, thu được xerogel khô.":"Dưới 100 °C còn dung môi dư trong gel."}
     ],
-    calc:p=>{
-      const U=Math.max(0.3,Math.min(1,1-Math.abs(Math.log10(p.h/6))*0.45-(p.pH-1)*0.06));
+    calc:(p,ctx)=>{
+      const y=solgelYield(p,ctx&&ctx.mat),U=y.U;
       const conc=p.m/p.solv;
       const D=2.0+0.5*Math.pow(p.h,0.6)+0.8*(p.pH-1)+0.14*Math.sqrt(p.age)+14*conc;
       return{D:Math.max(1.5,D),cryst:Math.min(0.35,0.04+0.02*Math.sqrt(p.age)+(p.dry>=100?0.04:0)),
-        def:Math.max(0.15,0.30+0.45*(1-U)),thick:400,yield:p.m*0.28,U,
-        extra:[["Độ đồng đều",`${(U*100).toFixed(0)}%`],["Hiệu suất oxit",`${fmt(p.m*0.28,2)} g`]]};
+        def:Math.max(0.15,0.30+0.45*(1-U)),thick:400,yield:y.yield,U,
+        theoretical:y.theoretical,conversion:y.conversion,handling:y.handling,
+        extra:[["Độ đồng đều",`${(U*100).toFixed(0)}%`],["Oxit lý thuyết",`${fmt(y.theoretical,2)} g ${y.spec.oxide}`],
+          ["Chuyển hóa × thu hồi",`${(y.conversion*100).toFixed(0)}% × ${(y.handling*100).toFixed(0)}%`],
+          ["Khối lượng oxit",`${fmt(y.yield,2)} g`]]};
+    }
+  },
+  znoSolgel:{
+    title:"Sol–gel ZnO · zinc acetate–MEA",
+    steps:[
+      {k:"m",ms:1500,label:"Khối lượng zinc acetate dihydrate",unit:"g",min:2.195,max:21.95,step:0.005,def:10.975,
+       note:(p,ctx)=>{const q=znoSolgelMetrics(p);return `Zinc acetate dihydrate · ${fmt(q.theoretical,2)} g ZnO lý thuyết.`;}},
+      {k:"solv",ms:1900,label:"Thể tích 2-methoxyethanol",unit:"mL",min:20,max:200,step:5,def:100,
+       note:(p,ctx)=>{const q=znoSolgelMetrics(p);return `Nồng độ zinc acetate ${fmt(q.concentrationM,3)} M · mục tiêu ≈ 0,5 M.`;}},
+      {k:"ratio",ms:1800,label:"Tỉ lệ mol MEA / zinc acetate",unit:":1",min:0.5,max:1.5,step:0.05,def:1,
+       note:p=>p.ratio<0.8?"Thiếu MEA: phức Zn–MEA chưa đủ ổn định, dễ kết tụ.":p.ratio>1.2?"Dư MEA: hữu cơ dư, làm chậm phân hủy và tăng carbon residue.":"Gần 1:1: phức Zn–MEA ổn định, dung dịch trong và đồng đều."},
+      {k:"T",ms:2200,label:"Nhiệt độ dung dịch",unit:"°C",min:25,max:80,step:5,def:60,
+       note:p=>p.T<45?"Nhiệt độ thấp: tạo phức và hòa tan chậm.":p.T>70?"Nhiệt độ cao: bay hơi dung môi, tăng nguy cơ gel hóa cục bộ.":"Khoảng 60 °C: cân bằng hòa tan, tạo phức và ổn định sol."},
+      {k:"stir",ms:2200,label:"Thời gian khuấy",unit:"giờ",min:0.5,max:4,step:0.5,def:2,
+       note:p=>p.stir<1?"Khuấy ngắn: phối trộn chưa hoàn toàn, độ đồng đều giảm.":p.stir>3?"Khuấy quá lâu: tăng bay hơi và nguy cơ nhiễm tạp.":"Khoảng 2 giờ: sol đồng nhất trước khi già hóa."},
+      {k:"age",ms:2600,label:"Thời gian già hóa",unit:"giờ",min:0,max:48,step:1,def:12,
+       note:p=>p.age<6?"Già hóa ngắn: mạng precursor chưa ổn định.":"Già hóa giúp phức Zn–MEA ổn định; lợi ích tăng dần rồi bão hòa."},
+      {k:"dry",ms:2400,label:"Nhiệt độ sấy khô",unit:"°C",min:60,max:150,step:5,def:100,
+       note:p=>p.dry<90?"Sấy thấp: còn dung môi/organics, handling và yield giảm.":"Khoảng 100 °C: thu xerogel precursor khô trước khi nung ZnO."}
+    ],
+    calc:(p,ctx)=>{
+      const q=znoSolgelMetrics(p);
+      return{D:q.D,cryst:q.cryst,def:q.def,thick:400,yield:q.yield,U:q.uniformity,
+        theoretical:q.theoretical,conversion:q.conversion,handling:q.handling,extra:q.extra};
     }
   },
   hydro:{
@@ -4984,9 +5883,11 @@ const RECIPES={
        note:p=>p.pH<10?"pH thấp: kết tinh chậm, tinh thể ít khuyết tật."
          :p.pH<12.5?"Vùng pH tối ưu cho phần lớn oxit thủy nhiệt.":"pH rất cao: hòa tan lại một phần, hạt to bất thường."},
       {k:"fill",ms:1800,label:"Hệ số điền đầy autoclave",unit:"%",min:40,max:85,step:5,def:70,
-       note:p=>`Áp suất trong bình khoảng ${fmt(pSatWater(p.T||180)*p.fill/70,1)} bar.`},
+       note:p=>{const q=autoclavePressure(p.T||180,p.fill);return q.unsafe
+         ? `<b>Cảnh báo:</b> nước nở tới ${fmt(q.hotFillPct,1)}% thể tích; headspace nóng dưới 5%, không phải điều kiện vận hành an toàn.`
+         : `Áp suất tổng ước tính ${fmt(q.total,1)} bar (hơi ${fmt(q.vapor,1)} + khí không ngưng ${fmt(q.noncond,1)}; headspace nóng ${q.headspacePct.toFixed(0)}%).`; }},
       {k:"T",ms:3000,label:"Nhiệt độ thủy nhiệt",unit:"°C",min:100,max:220,step:5,def:180,
-       note:p=>`Áp suất hơi bão hòa của nước ở ${p.T} °C là <b>${fmt(pSatWater(p.T),2)} bar</b> (phương trình Antoine).`},
+       note:p=>{const q=autoclavePressure(p.T,p.fill||70);return `Hơi bão hòa ở ${p.T} °C: <b>${fmt(q.vapor,2)} bar</b>; tổng ≈ ${fmt(q.total,2)} bar, fill nóng ${fmt(q.hotFillPct,1)}% (IAPWS).${q.unsafe?" <b>Giảm fill hoặc nhiệt độ.</b>":""}`;}},
       {k:"t",ms:2200,label:"Thời gian giữ",unit:"giờ",min:2,max:24,step:1,def:12,
        note:p=>`Thô hóa Ostwald: D ∝ t^⅓ nên gấp đôi thời gian chỉ tăng hạt khoảng 26%.`}
     ],
@@ -4994,10 +5895,15 @@ const RECIPES={
       // hiệu chỉnh theo mốc thực nghiệm: 180 °C/12 h cho hạt ≈ 60 nm
       const kT=Math.exp(-45000/(8.314*(p.T+273.15)))*3.32e5;
       const D=3+kT*Math.pow(p.t,1/3)*12*(1+(p.pH-11)*0.06)*(1-p.c*0.4);
+      const pressure=autoclavePressure(p.T,p.fill);
       return{D:Math.max(3,D),cryst:Math.min(0.96,0.55+0.0016*(p.T-100)+0.012*p.t),
         def:Math.max(0.05,0.30-0.0008*(p.T-100)-0.006*p.t),thick:400,
-        extra:[["Áp suất bình",`${fmt(pSatWater(p.T),2)} bar`],
-               ["Hệ số điền đầy",`${p.fill}%`]]};
+        valid:!pressure.unsafe,warning:pressure.unsafe?"Headspace nóng dưới 5%; giảm fill hoặc nhiệt độ.":null,
+        extra:[["Áp suất tổng bình",`${fmt(pressure.total,2)} bar`],
+               ["Hơi bão hòa",`${fmt(pressure.vapor,2)} bar`],
+               ["Khí không ngưng",`${fmt(pressure.noncond,2)} bar`],
+               ["Fill 25 °C → nóng",`${p.fill}% → ${fmt(pressure.hotFillPct,1)}%`],
+               ["Trạng thái an toàn",pressure.unsafe?"Không hợp lệ: headspace < 5%":"Trong miền mô hình"]]};
     }
   },
   cvd:{
@@ -5101,6 +6007,9 @@ const RECIPES={
     }
   }
 };
+function recipeFor(mat,method){
+  return mat==="ZnO"&&method==="solgel"?RECIPES.znoSolgel:RECIPES[method];
+}
 /* ============================================================
    MÔ PHỎNG TỪNG BƯỚC TRONG TRẠM TIỀN CHẤT
    Mỗi bước có cảnh riêng, vẽ tích lũy: bước 4 thấy cả kết quả bước 1–3.
@@ -5249,9 +6158,9 @@ const SCENES={
       pRect(214,224,192,16,3,fg(.14),fg(.36),1.4);
       pRect(390,246,90,22,3,"rgba(20,60,50,.7)",null);
       pMono(478,262,fmt(P.m*pr,2)+" g","#4BE39A",13,"right");
-      pBottle(310,222,34,52,"#C8B48A","TTIP");
+      pBottle(310,222,34,52,"#C8B48A",P._precursorName||"tiền chất");
       if(pr<1)pDrip(310,232,240,"#C8B48A",t,2);
-      pTxt(310,300,"Cân tiền chất alkoxide trên cân phân tích",fg(.45),11);
+      pTxt(310,300,"Cân tiền chất trên cân phân tích",fg(.45),11);
     },
     (P,pr,t)=>{                                   // 2 thêm dung môi
       pBeaker(300,250,120,120,0.18+0.52*pr,"#8FA8C8",t,{stir:pr>=1});
@@ -5338,7 +6247,7 @@ const SCENES={
       pTxt(300,336,"Chuyển vào bình lót teflon trong vỏ thép",fg(.45),11);
     },
     (P,pr,t)=>{                                   // gia nhiệt
-      const T=25+(P.T-25)*pr,Pb=pSatWater(T);
+      const T=25+(P.T-25)*pr,Pb=autoclavePressure(T,P.fill).total;
       pRect(190,150,180,130,10,fg(.05),fg(.38),2.2);
       PX.save();PX.beginPath();PX.roundRect(204,164,152,102,6);PX.clip();
       const gc=glowColor(Math.max(300,T*3));
@@ -5355,7 +6264,7 @@ const SCENES={
       PX.restore();
       pRect(204,164,152,102,6,null,fg(.24),1.4);
       pFlame(280,300,t,1.1);
-      pGauge(470,210,34,Pb,25,"áp suất"," bar");
+      pGauge(470,210,34,Pb,Math.max(25,Pb*1.15),"áp suất tổng"," bar");
       pMono(280,140,Math.round(T)+" °C",fg(.85),13);
       pTxt(300,336,`Giữ ${P.t} h — tinh thể lớn dần theo D ∝ t^⅓`,fg(.45),11);
     },
@@ -5373,6 +6282,57 @@ const SCENES={
     }
   ]
 };
+
+/* ZnO sol–gel uses zinc acetate–MEA chemistry, not the generic alkoxide route. */
+SCENES.znoSolgel=[
+  (P,pr,t)=>{
+    pRect(200,240,220,34,5,fg(.09),fg(.35),1.7);
+    pRect(214,224,192,16,3,fg(.14),fg(.36),1.4);
+    pMono(478,262,fmt(P.m*pr,2)+" g","#4BE39A",13,"right");
+    pBottle(310,222,34,52,"#C8B48A", "zinc acetate·2H₂O");
+    if(pr<1)pDrip(310,232,240,"#C8B48A",t,2);
+    pTxt(310,300,"Cân zinc acetate dihydrate",fg(.45),11);
+  },
+  (P,pr,t)=>{
+    pBeaker(300,250,120,120,0.18+0.52*pr,"#8FA8C8",t,{stir:pr>=1});
+    pStirBar(300,250,t,pr>=1);
+    if(pr<1){pBottle(430,150,30,46,"#A8C8E8","2-methoxyethanol",-0.5);pDrip(408,168,140,"#A8C8E8",t,3);}
+    pMono(300,120,fmt(P.m*1000/(219.50*P.solv),3)+" M",fg(.8),13);
+    pTxt(300,300,`Hòa tan trong ${P.solv} mL 2-methoxyethanol`,fg(.45),11);
+  },
+  (P,pr,t)=>{
+    pBeaker(300,250,120,120,0.62,"#9FB8D8",t,{stir:true,turbid:0.15*(1-pr)});
+    pStirBar(300,250,t,true);
+    pBottle(430,150,28,44,"#D8B47A","MEA",-0.5);
+    if(pr<1)pDrip(410,168,142,"#D8B47A",t,3);
+    pMono(300,120,"MEA / Zn = "+fmt(P.ratio,2)+":1",fg(.8),13);
+    pTxt(300,300,"Thêm monoethanolamine (MEA), tạo phức Zn–MEA",fg(.45),11);
+  },
+  (P,pr,t)=>{
+    const T=25+(P.T-25)*pr;
+    pBeaker(300,250,120,120,0.70,"#9FB8D8",t,{stir:true,turbid:0.12});
+    pStirBar(300,250,t,true);
+    pFlame(240,306,t,0.65);pFlame(360,306,t,0.65);
+    pMono(300,120,Math.round(T)+" °C · khuấy "+fmt(P.stir*pr,1)+" h",fg(.8),13);
+    pTxt(300,300,"Ổn định dung dịch Zn–MEA ở nhiệt độ kiểm soát",fg(.45),11);
+  },
+  (P,pr,t)=>{
+    pBeaker(300,250,120,120,0.72,"#8EA7C6",t,{stir:false,turbid:0.16+0.25*pr});
+    pMono(300,120,"già hóa "+Math.round(P.age*pr)+" / "+P.age+" h",fg(.8),13);
+    pTxt(300,300,pr>0.6?"Phức Zn–MEA đã ổn định":"Mạng precursor đang ổn định",fg(.45),11);
+  },
+  (P,pr,t)=>{
+    pOven(300,250,230,120,60+(P.dry-60)*pr,t,()=>{
+      const shrink=1-pr*0.32;
+      PX.fillStyle="rgba(214,206,190,.85)";
+      PX.beginPath();PX.roundRect(300-70*shrink,205-14*shrink,140*shrink,50*shrink,4);PX.fill();
+    });
+    pTxt(300,308,pr>0.9?"Thu xerogel precursor ZnO khô — sẵn sàng nung":"Dung môi bay hơi, xerogel co lại",fg(.45),11);
+  }
+];
+function sceneFor(mat,method){
+  return mat==="ZnO"&&method==="solgel"?SCENES.znoSolgel:(SCENES[method]||[]);
+}
 
 function pChamber(x,y,w,h){
   pRect(x-w/2,y-h,w,h,10,fg(.04),fg(.36),2.2);
@@ -5689,7 +6649,7 @@ const STATION_HTML={
 
   precursor:()=>{
     if(!PENDING)return `<p class="log-empty">Hãy chọn hệ vật liệu và phương pháp ở trạm phối liệu trước.</p>`;
-    const R=RECIPES[PENDING.method];
+    const R=recipeFor(PENDING.mat,PENDING.method);
     const pre=(PRECURSOR[PENDING.mat]||{})[PENDING.method]||"tiền chất tiêu chuẩn";
     return `
     <div class="note" style="margin:0 0 16px">
@@ -5822,10 +6782,12 @@ const STATION_INIT={
   },
   precursor:()=>{
     if(!PENDING)return;
-    const R=RECIPES[PENDING.method];
-    const SC=SCENES[PENDING.method]||[];
-    if(!PARAMS||PARAMS._m!==PENDING.method){
-      PARAMS={_m:PENDING.method};
+    const R=recipeFor(PENDING.mat,PENDING.method);
+    const SC=sceneFor(PENDING.mat,PENDING.method);
+    const calcCtx={mat:PENDING.mat,method:PENDING.method,
+      precursor:(PRECURSOR[PENDING.mat]||{})[PENDING.method]||"tiền chất tiêu chuẩn"};
+    if(!PARAMS||PARAMS._m!==PENDING.method||PARAMS._mat!==PENDING.mat){
+      PARAMS={_m:PENDING.method,_mat:PENDING.mat,_precursorName:calcCtx.precursor};
       R.steps.forEach(s=>PARAMS[s.k]=s.def);
       PSIM={step:0,done:R.steps.map(()=>false),prog:0,raf:null,t0:0,running:false};
     }
@@ -5888,7 +6850,7 @@ const STATION_INIT={
           </div>
           <input type="range" id="pcRange" min="${s.min}" max="${s.max}" step="${s.step}"
             value="${PARAMS[s.k]}" ${locked?"disabled":""}>
-          <p class="field-hint" style="margin-top:3px">${s.note(PARAMS)}</p>
+          <p class="field-hint" style="margin-top:3px">${s.note(PARAMS,calcCtx)}</p>
         </div>
         <button class="btn ${PSIM.done[cur]?"btn-ghost":"btn-primary"}" id="pcGo"
           ${PSIM.running?"disabled":""} style="align-self:flex-start;white-space:nowrap">
@@ -5897,12 +6859,13 @@ const STATION_INIT={
       const rg=$("#pcRange");
       if(rg)rg.addEventListener("input",e=>{PARAMS[s.k]=+e.target.value;paint();});
       $("#pcGo").addEventListener("click",()=>{
+        for(let j=cur;j<PSIM.done.length;j++)PSIM.done[j]=false;
         PSIM.done[cur]=false;PSIM.prog=0;PSIM.running=true;
         PSIM.ms=reduceMotion?1:(s.ms||1800);
         PSIM.t0=performance.now();
         if(reduceMotion)finishStep(); else paint();
       });
-      const c=R.calc(PARAMS);
+      const c=R.calc(PARAMS,calcCtx);
       $("#preOut").innerHTML=[
         ["Kích thước hạt D₀",`${fmt(c.D,1)}<small> nm</small>`],
         ["Độ kết tinh",`${(c.cryst*100).toFixed(0)}<small>%</small>`],
@@ -5926,7 +6889,8 @@ const STATION_INIT={
     PSIM.raf=requestAnimationFrame(loop);
 
     $("#preReset").addEventListener("click",()=>{
-      PARAMS={_m:PENDING.method};R.steps.forEach(s=>PARAMS[s.k]=s.def);
+      PARAMS={_m:PENDING.method,_mat:PENDING.mat,_precursorName:calcCtx.precursor};
+      R.steps.forEach(s=>PARAMS[s.k]=s.def);
       PSIM.step=0;PSIM.done=R.steps.map(()=>false);PSIM.prog=0;PSIM.running=false;
       paint();
     });
@@ -5935,10 +6899,12 @@ const STATION_INIT={
       const btn=e.currentTarget;
       btn.disabled=true;btn.classList.add("busy");btn.textContent="Đang thu mẫu…";
       const go=()=>{
-        const c=R.calc(PARAMS);
+        const c=R.calc(PARAMS,calcCtx);
         SMP=newSample(PENDING.mat,PENDING.method);
         SMP.D=c.D;SMP.cryst=c.cryst;SMP.def=c.def;SMP.thick=c.thick;
-        SMP.recipe={method:PENDING.method,params:{...PARAMS}};
+        const extra=(c.extra||[]).map(row=>Array.isArray(row)?row.slice():row);
+        SMP.recipe={method:PENDING.method,material:PENDING.mat,params:{...PARAMS},
+          result:{...c,extra},extra};
         seedGrainView();
         note(`Hoàn tất quy trình <b>${R.title}</b> qua ${R.steps.length} bước: `+
           `D₀ = <b>${fmt(c.D,1)} nm</b>, kết tinh ${(c.cryst*100).toFixed(0)}%, sai hỏng ${(c.def*100).toFixed(0)}%.`,true);
@@ -6103,6 +7069,7 @@ function redrawStatic(){
     drawTrend("trendEn","trendEnWrap","trendEnTip","en","","Độ âm điện (Pauling)",v=>v.toFixed(1));
     drawTrend("trendIe","trendIeWrap","trendIeTip","ie1","kJ/mol","Năng lượng ion hóa I₁",v=>Math.round(v));
   }}catch(e){}
+  try{if(typeof renderOrbitalFingerprint==="function")renderOrbitalFingerprint();}catch(e){}
 }
 
 /* --- tabs của không gian Lab và Data Studio hợp nhất --- */

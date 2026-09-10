@@ -105,7 +105,9 @@ PAGES = {
  ),
 }
 
-HREF = {"lab":"index.html","fab":"vat-lieu.html","atom":"nguyen-tu.html"}
+# Mọi link web quay về workspace hợp nhất; các entry cũ vẫn được dựng để tương thích
+# bookmark, artifact và đường dẫn đã công bố trước đây.
+HREF = {"lab":"index.html#lab","fab":"index.html#fab","atom":"index.html#atom"}
 NAV = {
   "lab":("Phòng lab hóa học","🧪"),"fab":("Xưởng vật liệu","◈"),
   "mix":("Bàn tính toán","⚗"),"atom":("Bảng tuần hoàn","⚛"),
@@ -152,7 +154,7 @@ def nav_html(page):
             rows.append('    <a class="tab"%s href="%s" style="text-decoration:none">'
                         '<span class="tab-glyph">%s</span> %s</a>' % (tgt, href, ico, name))
     if not ARTIFACT:
-        rows.append('    <a class="tab" href="analysis.html" style="text-decoration:none">'
+        rows.append('    <a class="tab" href="index.html#studio" style="text-decoration:none">'
                     '<span class="tab-glyph">▥</span> Phân tích dữ liệu</a>')
     extra = ""
     if page == "lab":
